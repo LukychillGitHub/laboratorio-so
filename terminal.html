@@ -1,0 +1,890 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2948b8">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
+<title>Terminal de práctica</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: pestañas arriba; cada modo es una consola real (terminal oscura) con su panel de guía al costado o arriba */
+:root{
+  --paper:#f4f6f9; --sheet:#ffffff; --ink:#18202c; --muted:#5a6578; --rule:#d9dfe8;
+  --pen:#2948b8; --pen-soft:#e6ebfb; --hl:#f2b705; --hl-soft:#fff4cc;
+  --ok:#1b7a49; --ok-soft:#e2f3e9; --bad:#b3261e; --bad-soft:#fbe6e4;
+  --term:#0e131d; --term-fg:#d8deeb; --term-dim:#7f8aa1; --term-prompt:#6ee7a8; --term-path:#8fb4ff; --term-err:#ff8a80; --term-cmd:#ffffff;
+  --display:"Familjen Grotesk",system-ui,sans-serif; --body:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#0f1219; --sheet:#171c26; --ink:#e6e9f0; --muted:#9aa4b6; --rule:#2a3140;
+  --pen:#8fa6ff; --pen-soft:#1e2646; --hl:#ffcc33; --hl-soft:#3a3214;
+  --ok:#5fd39a; --ok-soft:#163325; --bad:#ff8a80; --bad-soft:#3a1c1a; --term:#080b12; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0f1219; --sheet:#171c26; --ink:#e6e9f0; --muted:#9aa4b6; --rule:#2a3140;
+  --pen:#8fa6ff; --pen-soft:#1e2646; --hl:#ffcc33; --hl-soft:#3a3214;
+  --ok:#5fd39a; --ok-soft:#163325; --bad:#ff8a80; --bad-soft:#3a1c1a; --term:#080b12; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font:15.5px/1.6 var(--body);margin:0}
+.wrap{max-width:1080px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px 80px;display:flex;flex-direction:column;gap:20px}
+h1{font:700 clamp(30px,5.2vw,46px)/1.04 var(--display);margin:0;text-wrap:balance}
+h2{font:700 23px/1.15 var(--display);margin:0;text-wrap:balance}
+h3{font:600 15px/1.3 var(--body);margin:0}
+p{margin:0;max-width:70ch}
+.eyebrow{font:500 12px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.lead{color:var(--muted)}
+.stack{display:flex;flex-direction:column;gap:12px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{font:500 14px/1 var(--body);border-radius:999px;padding:10px 15px;border:1px solid var(--pen);background:var(--pen);color:var(--sheet);cursor:pointer}
+.btn.ghost{background:var(--sheet);color:var(--pen)}
+.btn.small{padding:7px 12px;font-size:13px}
+.btn:disabled{opacity:.38;cursor:default}
+.btn:focus-visible,select:focus-visible,.tab:focus-visible,.chk:focus-within,.opt:focus-visible{outline:2px solid var(--pen);outline-offset:2px}
+select,input[type=text],input[type=number]{font:inherit;font-size:14px;padding:8px 10px;border-radius:10px;border:1px solid var(--rule);background:var(--sheet);color:var(--ink)}
+code{font:500 .9em var(--mono);background:var(--pen-soft);padding:1px 5px;border-radius:4px;overflow-wrap:anywhere}
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:6;display:flex;gap:6px;flex-wrap:wrap;background:var(--paper);padding-block:8px;border-bottom:1px solid var(--rule)}
+.tab{font:600 14px/1 var(--body);padding:11px 14px;border-radius:10px;border:1px solid var(--rule);background:var(--sheet);color:var(--muted);cursor:pointer}
+.tab[aria-pressed="true"]{background:var(--pen);border-color:var(--pen);color:var(--sheet)}
+.panel{background:var(--sheet);border:1px solid var(--rule);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+/* terminal */
+.term{background:var(--term);color:var(--term-fg);border-radius:12px;display:flex;flex-direction:column;min-width:0;overflow:hidden;border:1px solid #000}
+.term .bar{display:flex;gap:6px;align-items:center;padding:8px 12px;background:rgba(255,255,255,.05);font:500 12px/1 var(--mono);color:var(--term-dim)}
+.term .bar i{width:10px;height:10px;border-radius:50%;background:#ff5f57}.term .bar i:nth-child(2){background:#febc2e}.term .bar i:nth-child(3){background:#28c840}
+.term .bar span{margin-left:8px}
+.term .scr{font:13.5px/1.5 var(--mono);padding:12px 14px;overflow:auto;white-space:pre;min-height:260px;max-height:440px}
+.term .scr .p{color:var(--term-prompt)} .term .scr .w{color:var(--term-path)} .term .scr .c{color:var(--term-cmd);font-weight:600}
+.term .scr .e{color:var(--term-err)} .term .scr .note{color:#ffd479;white-space:pre-wrap}
+.term .in{display:flex;align-items:center;gap:8px;padding:10px 14px;border-top:1px solid rgba(255,255,255,.08)}
+.term .in label{font:500 13.5px/1 var(--mono);color:var(--term-prompt);white-space:nowrap}
+.term .in input{flex:1;min-width:0;background:transparent;border:0;color:#fff;font:500 16px/1.2 var(--mono);outline:none;padding:4px 0}
+.term .cron{display:flex;gap:8px;flex-wrap:wrap;padding:10px 14px;background:rgba(255,212,121,.08);border-top:1px dashed rgba(255,212,121,.4)}
+.term .cron input{flex:1 1 260px;min-width:0;background:#000;color:#fff;border:1px solid #444;border-radius:8px;font:500 14px/1.2 var(--mono);padding:8px}
+/* guiada */
+.gl{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.35fr);gap:14px;align-items:start}
+@media (max-width:860px){.gl{grid-template-columns:minmax(0,1fr)}}
+.steps{display:flex;flex-direction:column;gap:4px;max-height:280px;overflow:auto;padding-right:4px}
+.step{display:flex;gap:8px;align-items:baseline;font-size:13.5px;padding:5px 8px;border-radius:8px;color:var(--muted);border:0;background:transparent;text-align:left;cursor:pointer}
+.step b{font:600 12px/1 var(--mono);min-width:26px}
+.step.cur{background:var(--hl-soft);color:var(--ink)}
+.step.done{color:var(--ok)}
+.task{border:2px solid var(--hl);border-radius:12px;padding:12px 14px;background:var(--hl-soft);display:flex;flex-direction:column;gap:8px}
+.task .n{font:600 12px/1 var(--mono);color:var(--muted)}
+.task p{font-weight:500}
+.expl{border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;font-size:14.5px}
+.expl.ok{background:var(--ok-soft);border:1px solid var(--ok)} .expl.ok b.t{color:var(--ok)}
+.expl.no{background:var(--bad-soft);border:1px solid var(--bad)} .expl.no b.t{color:var(--bad)}
+.bar2{height:7px;border-radius:99px;background:var(--rule);overflow:hidden}.bar2 span{display:block;height:100%;background:var(--ok)}
+.switch{display:flex;gap:8px;align-items:center;font-size:14px;cursor:pointer}
+.switch input{width:18px;height:18px;accent-color:var(--pen)}
+/* flags */
+.fl{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:14px;align-items:start}
+@media (max-width:820px){.fl{grid-template-columns:minmax(0,1fr)}}
+.cmdlist{display:flex;flex-wrap:wrap;gap:6px}
+.cmdlist .tab{font:600 13px/1 var(--mono);padding:8px 11px}
+.chk{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--rule);border-radius:10px;padding:9px 11px;cursor:pointer;background:var(--paper)}
+.chk input{margin-top:3px;width:17px;height:17px;accent-color:var(--pen);flex:none}
+.chk code{background:transparent;font-weight:600;padding:0}
+.chk span{font-size:13.5px}
+.chk.on{border-color:var(--pen);background:var(--pen-soft)}
+.built{font:600 16px/1.4 var(--mono);background:var(--term);color:#fff;border-radius:10px;padding:10px 14px;overflow-x:auto;white-space:pre}
+.built .p{color:var(--term-prompt)}
+/* MC */
+.q{background:var(--sheet);border:1px solid var(--rule);border-radius:14px;padding:18px 20px;display:flex;flex-direction:column;gap:12px}
+.q .prompt{font:600 18px/1.4 var(--body)}
+.q pre{background:var(--term);color:var(--term-fg);border-radius:10px;padding:12px 14px;font:13px/1.5 var(--mono);overflow-x:auto;margin:0}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{display:flex;gap:10px;text-align:left;background:var(--paper);color:var(--ink);border:1px solid var(--rule);border-radius:10px;padding:11px 14px;font-size:15px;cursor:pointer}
+.opt .k{font:600 12px/1.6 var(--mono);color:var(--muted)}
+.opt.ok{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)} .opt.no{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
+.opt:disabled{cursor:default}
+.hud{display:flex;gap:14px;font:500 13px/1 var(--mono);color:var(--muted);flex-wrap:wrap}.hud b{color:var(--ink)}
+.big{font:700 54px/1 var(--display)}
+[hidden]{display:none!important}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+<header class="stack" style="gap:8px">
+  <span class="eyebrow">Sistemas Operativos · Comandos de Linux · TPs del servidor</span>
+  <h1>Terminal de práctica</h1>
+  <p class="lead">Una terminal de Ubuntu simulada, con usuario <code>lucas</code> sin sudo, como en el servidor de la facultad. Hacé los TPs ejercicio por ejercicio y mirá la salida real, cambiá los flags para ver qué hace cada uno, o practicá el multiple choice.</p>
+</header>
+
+<nav class="tabs" aria-label="Modos">
+  <button class="tab" data-v="guia" id="tab-guia">1 · TPs paso a paso</button>
+  <button class="tab" data-v="flags" id="tab-flags">2 · Laboratorio de flags</button>
+  <button class="tab" data-v="libre" id="tab-libre">3 · Terminal libre</button>
+  <button class="tab" data-v="mc" id="tab-mc">4 · Multiple choice</button>
+</nav>
+
+<!-- 1 GUIADA -->
+<div id="v-guia" class="stack">
+  <div class="row">
+    <label for="msel" class="lead" style="font-size:14px">TP:</label>
+    <select id="msel"></select>
+    <label class="switch" for="auto"><input type="checkbox" id="auto" checked> Guardar cada salida en el archivo de entrega (como pide el TP)</label>
+    <button class="btn ghost small" id="mreset">Empezar el TP de nuevo</button>
+  </div>
+  <div class="gl">
+    <div class="stack">
+      <div class="panel"><div class="row" style="justify-content:space-between"><h3 id="mtitle"></h3><span class="eyebrow" id="mprog"></span></div><div class="bar2"><span id="mbar" style="width:0"></span></div><div class="steps" id="msteps"></div></div>
+    </div>
+    <div class="stack">
+      <div class="task" id="task"></div>
+      <div id="gterm"></div>
+      <div id="gexpl"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 2 FLAGS -->
+<div id="v-flags" class="stack" hidden>
+  <p>Elegí un comando, prendé y apagá sus opciones y mirá cómo cambia la salida. Todo corre sobre los archivos de los TPs: <code>notas.csv</code>, <code>palabras.txt</code>, <code>secreto.txt</code>, <code>/etc/passwd</code>…</p>
+  <div class="cmdlist" id="fcmds"></div>
+  <div class="fl">
+    <div class="stack" id="fopts"></div>
+    <div class="stack"><div class="built" id="fbuilt"></div><div class="term"><div class="bar"><i></i><i></i><i></i><span>salida</span></div><div class="scr" id="fout" style="min-height:180px"></div></div><div class="panel" id="fexpl"></div></div>
+  </div>
+</div>
+
+<!-- 3 LIBRE -->
+<div id="v-libre" class="stack" hidden>
+  <p>Probá lo que quieras. Ya existen <code>notas.csv</code>, <code>palabras.txt</code>, <code>secreto.txt</code> y la carpeta <code>lab_seguridad</code>. Escribí <code>help</code> para ver los comandos; con ↑ y ↓ recorrés el historial.</p>
+  <div class="row"><label class="switch" for="rootm"><input type="checkbox" id="rootm"> Modo administrador (permite sudo, para practicar ufw, iptables, fail2ban-client y systemctl)</label><button class="btn ghost small" id="lreset">Reiniciar la terminal</button></div>
+  <div class="row" id="lquick"></div>
+  <div id="lterm"></div>
+</div>
+
+<!-- 4 MC -->
+<div id="v-mc" class="stack" hidden>
+  <div class="row" style="justify-content:space-between"><div class="hud" id="mchud"></div><button class="btn ghost small" id="mcnew">Nueva ronda</button></div>
+  <div id="mcbox"></div>
+</div>
+</div>
+
+<script>
+/* ===== Mini shell de Linux simulado (sin red, todo en memoria) ===== */
+function makeShell(opt){
+opt=opt||{};
+const HOME='/home/lucas', USER='lucas', HOST='servidor-so';
+const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const DAY=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const BASE=new Date(2026,9,27,16,30,0).getTime();
+const sh={cwd:HOME,umask:0o022,aliases:{},cron:'',root:!!opt.root,tick:0,hist:[],onCronEdit:null,ufw:{on:false,rules:[]},f2b:{on:false}};
+const now=()=>BASE+sh.tick*17000;
+const N=(t,p,o,g,m,extra)=>Object.assign({t,p,o:o||USER,g:g||o||USER,m:m||BASE-86400000},extra||{});
+const D=(p,o,g,m)=>N('d',p,o,g,m,{ch:{}});
+const F=(c,p,o,g,m,sz)=>N('f',p,o,g,m,{c,sz});
+const day=(d,h,mi)=>new Date(2026,9,27-d,h||10,mi||0).getTime();
+const root=D(0o755,'root','root',day(40));
+const put=(path,node)=>{const parts=path.split('/').filter(Boolean); let cur=root; for(let i=0;i<parts.length-1;i++){cur=cur.ch[parts[i]];} cur.ch[parts[parts.length-1]]=node; return node;};
+['bin','boot','dev','etc','home','opt','proc','root','run','srv','tmp','usr','var'].forEach(d=>put('/'+d,D(d==='tmp'?0o1777:d==='root'?0o700:0o755,'root','root',day(40))));
+const PASSWD=`root:x:0:0:root:/root:/bin/bash
+daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin
+bin:x:2:2:bin:/bin:/usr/sbin/nologin
+sys:x:3:3:sys:/dev:/usr/sbin/nologin
+sync:x:4:65534:sync:/bin:/bin/sync
+www-data:x:33:33:www-data:/var/www:/usr/sbin/nologin
+nobody:x:65534:65534:nobody:/nonexistent:/usr/sbin/nologin
+systemd-network:x:100:102:systemd Network Management,,,:/run/systemd:/usr/sbin/nologin
+syslog:x:104:110::/home/syslog:/usr/sbin/nologin
+sshd:x:110:65534::/run/sshd:/usr/sbin/nologin
+profe:x:1000:1000:Profesor SO,,,:/home/profe:/bin/bash
+lucas:x:1001:1001:Lucas Fernandez,,,:/home/lucas:/bin/bash
+ana:x:1002:1002:Ana Gomez,,,:/home/ana:/bin/bash
+`;
+put('/etc/passwd',F(PASSWD,0o644,'root','root',day(45,10,22)));
+put('/etc/shadow',F('(contraseñas cifradas: solo root)\n',0o640,'root','shadow',day(45,10,22)));
+put('/etc/group',F('root:x:0:\nusers:x:100:lucas,ana\nlucas:x:1001:\nana:x:1002:\n',0o644,'root','root',day(45,10,22)));
+put('/etc/hostname',F(HOST+'\n',0o644,'root','root',day(60)));
+put('/etc/hosts',F('127.0.0.1 localhost\n127.0.1.1 '+HOST+'\n\n::1     ip6-localhost ip6-loopback\n',0o644,'root','root',day(60)));
+put('/etc/resolv.conf',F('# This is /run/systemd/resolve/stub-resolv.conf managed by man:systemd-resolved(8).\nnameserver 127.0.0.53\noptions edns0 trust-ad\nsearch .\n',0o644,'root','root',day(2,8,15)));
+put('/etc/fstab',F('UUID=3f1c-a8 / ext4 defaults 0 1\n',0o644,'root','root',day(60)));
+put('/etc/os-release',F('PRETTY_NAME="Ubuntu 22.04.4 LTS"\nNAME="Ubuntu"\nVERSION_ID="22.04"\n',0o644,'root','root',day(60)));
+put('/etc/crontab',F('# /etc/crontab: system-wide crontab\n17 *\t* * *\troot\tcd / && run-parts --report /etc/cron.hourly\n',0o644,'root','root',day(60)));
+put('/etc/ssh',D(0o755,'root','root',day(5,9,40)));
+put('/etc/fail2ban',D(0o755,'root','root',day(3,11,5)));
+put('/etc/ufw',D(0o755,'root','root',day(3,11,2)));
+put('/etc/apt',D(0o755,'root','root',day(1,7,50)));
+put('/etc/motd',F('Bienvenidos al servidor de Sistemas Operativos\n',0o644,'root','root',day(0,9,0)));
+put('/var/log',D(0o775,'root','syslog',day(0,16,20)));
+put('/var/log/syslog',F('',0o640,'syslog','adm',day(0,16,29),1258291));
+put('/var/log/auth.log',F('',0o640,'syslog','adm',day(0,16,28),245760));
+put('/var/log/kern.log',F('',0o640,'syslog','adm',day(0,15,2),88064));
+put('/var/log/dpkg.log',F('',0o644,'root','root',day(1,7,52),412318));
+put('/var/log/apt',D(0o755,'root','root',day(1,7,52)));
+put('/var/log/journal',D(0o2755,'root','systemd-journal',day(6)));
+put('/var/log/btmp',F('',0o660,'root','utmp',day(0,14,11),3840));
+put('/home/lucas',D(0o750,USER,USER,day(0,16,2)));
+put('/home/ana',D(0o750,'ana','ana',day(1)));
+put('/home/profe',D(0o750,'profe','profe',day(9)));
+put(HOME+'/.bashrc',F('# ~/.bashrc\n'.padEnd(3771,'#'),0o644,USER,USER,day(20)));
+put(HOME+'/.profile',F('# ~/.profile\n'.padEnd(807,'#'),0o644,USER,USER,day(20)));
+put(HOME+'/.bash_logout',F('# ~/.bash_logout\n'.padEnd(220,'#'),0o644,USER,USER,day(20)));
+if(opt.samples){
+  put(HOME+'/notas.csv',F('Juan,80\nAna,90\nLuis,75\nZoe,95\n',0o664,USER,USER,day(0,16,5)));
+  put(HOME+'/palabras.txt',F('perro\ncasa\nzorro\navion\nbarco\n',0o664,USER,USER,day(0,16,6)));
+  put(HOME+'/secreto.txt',F('mi clave del wifi es 1234\n',0o600,USER,USER,day(0,16,7)));
+  put(HOME+'/script.sh',F('#!/bin/bash\necho hola\n',0o664,USER,USER,day(0,16,8)));
+  put(HOME+'/lab_seguridad',D(0o775,USER,USER,day(0,16,9)));
+  put(HOME+'/lab_seguridad/notas.txt',F('apuntes del lab\n',0o664,USER,USER,day(0,16,9)));
+  put(HOME+'/lab_seguridad/temp.tmp',F('basura\n',0o664,USER,USER,day(0,16,9)));
+}
+/* ---------- utilidades de rutas ---------- */
+function norm(p){ if(p==='~')p=HOME; else if(p.startsWith('~/'))p=HOME+p.slice(1); if(!p.startsWith('/'))p=(sh.cwd==='/'?'':sh.cwd)+'/'+p; const out=[]; p.split('/').forEach(x=>{if(!x||x==='.')return; if(x==='..')out.pop(); else out.push(x);}); return '/'+out.join('/'); }
+function get(p){ const parts=norm(p).split('/').filter(Boolean); let cur=root; for(const x of parts){ if(!cur||cur.t!=='d'||!cur.ch[x]) return null; cur=cur.ch[x]; } return cur; }
+function parentOf(p){ const n=norm(p); const i=n.lastIndexOf('/'); return {dir:get(n.slice(0,i)||'/'),name:n.slice(i+1),full:n}; }
+const short=p=>p===HOME?'~':p.startsWith(HOME+'/')?'~'+p.slice(HOME.length):p;
+const canW=d=>sh.root||(d.o===USER&&(d.p&0o200))||(d.p&0o002);
+const canRead=(n)=>sh.root||n.o===USER?(n.p&0o400):(n.g===USER||n.g==='users'?(n.p&0o040):(n.p&0o004));
+/* ---------- formato ---------- */
+const permStr=n=>(n.t==='d'?'d':'-')+[6,3,0].map(s=>{const v=(n.p>>s)&7;return (v&4?'r':'-')+(v&2?'w':'-')+(v&1?'x':'-');}).join('').replace(/x(?=$)/,(n.p&0o1000)?'t':'x').replace(/-$/,(n.p&0o1000)?'T':'-');
+const size=n=>n.t==='d'?4096:(n.sz!=null?n.sz:new TextEncoder().encode(n.c).length);
+const blocks=n=>n.t==='d'?4:Math.ceil(size(n)/4096)*4;
+function human(b){ if(b<1024) return String(b); const u=['K','M','G','T']; let v=b, i=-1; do{v/=1024;i++;}while(v>=1024&&i<3); return v<10?(Math.ceil(v*10)/10).toFixed(1)+u[i]:Math.ceil(v)+u[i]; }
+function lsDate(ms){ const d=new Date(ms); return MON[d.getMonth()]+' '+String(d.getDate()).padStart(2,' ')+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
+const fdate=ms=>{const d=new Date(ms);const z=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())} ${z(d.getHours())}:${z(d.getMinutes())}:${z(d.getSeconds())}.000000000 -0300`;};
+const pad=(s,w,left)=>{s=String(s);return left?s.padEnd(w):s.padStart(w);};
+const ino=p=>{let h=0;for(const c of p)h=(h*31+c.charCodeAt(0))>>>0;return 390000+h%90000;};
+/* ---------- sha256 ---------- */
+function sha256(str){const b=new TextEncoder().encode(str);const K=[0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+ const H=[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+ const l=b.length, nb=((l+9+63)>>6)<<6, m=new Uint8Array(nb); m.set(b); m[l]=0x80; const bits=l*8; const dv=new DataView(m.buffer); dv.setUint32(nb-4,bits>>>0); dv.setUint32(nb-8,Math.floor(bits/4294967296));
+ const w=new Uint32Array(64), r=(x,n)=>(x>>>n)|(x<<(32-n));
+ for(let o=0;o<nb;o+=64){for(let i=0;i<16;i++)w[i]=dv.getUint32(o+i*4);for(let i=16;i<64;i++){const s0=r(w[i-15],7)^r(w[i-15],18)^(w[i-15]>>>3),s1=r(w[i-2],17)^r(w[i-2],19)^(w[i-2]>>>10);w[i]=(w[i-16]+s0+w[i-7]+s1)>>>0;}
+  let [a,bb,c,d,e,f,g,h]=H;for(let i=0;i<64;i++){const S1=r(e,6)^r(e,11)^r(e,25),ch=(e&f)^(~e&g),t1=(h+S1+ch+K[i]+w[i])>>>0,S0=r(a,2)^r(a,13)^r(a,22),mj=(a&bb)^(a&c)^(bb&c),t2=(S0+mj)>>>0;h=g;g=f;f=e;e=(d+t1)>>>0;d=c;c=bb;bb=a;a=(t1+t2)>>>0;}
+  H[0]=(H[0]+a)>>>0;H[1]=(H[1]+bb)>>>0;H[2]=(H[2]+c)>>>0;H[3]=(H[3]+d)>>>0;H[4]=(H[4]+e)>>>0;H[5]=(H[5]+f)>>>0;H[6]=(H[6]+g)>>>0;H[7]=(H[7]+h)>>>0;}
+ return H.map(x=>x.toString(16).padStart(8,'0')).join('');}
+/* ---------- tokenizador ---------- */
+function tokenize(s){ const T=[]; let i=0, cur=null;
+  const push=()=>{ if(cur!==null){T.push(cur);cur=null;} };
+  const w=()=>{ if(cur===null) cur={t:'w',v:'',q:false,glob:false}; return cur; };
+  while(i<s.length){ const c=s[i];
+    if(c===' '||c==='\t'){push();i++;continue;}
+    if(s.startsWith('2>&1',i)){push();T.push({t:'op',v:'2>&1'});i+=4;continue;}
+    if(s.startsWith('&>>',i)){push();T.push({t:'op',v:'&>>'});i+=3;continue;}
+    if(s.startsWith('&&',i)){push();T.push({t:'op',v:'&&'});i+=2;continue;}
+    if(s.startsWith('||',i)){push();T.push({t:'op',v:'||'});i+=2;continue;}
+    if(s.startsWith('>>',i)){push();T.push({t:'op',v:'>>'});i+=2;continue;}
+    if(s.startsWith('2>',i)&&(cur===null)){push();T.push({t:'op',v:'2>'});i+=2;continue;}
+    if(c==='>'||c==='|'||c===';'||c==='<'){push();T.push({t:'op',v:c});i++;continue;}
+    if(c==="'"){ const j=s.indexOf("'",i+1); const e=j<0?s.length:j; const t=w(); t.v+=s.slice(i+1,e); t.q=true; i=e+1; continue; }
+    if(c==='"'){ let j=i+1, buf=''; while(j<s.length&&s[j]!=='"'){ if(s[j]==='\\'&&(s[j+1]==='"'||s[j+1]==='\\'||s[j+1]==='$')){buf+=s[j+1];j+=2;continue;} buf+=s[j]; j++; } const t=w(); t.v+=expandVars(buf); t.q=true; i=j+1; continue; }
+    if(c==='\\'){ const t=w(); t.v+=s[i+1]||''; i+=2; continue; }
+    const t=w(); if(c==='*'||c==='?') t.glob=true; t.v+=c; i++; }
+  push();
+  T.forEach(t=>{ if(t.t==='w'&&!t.q){ if(t.v==='~'||t.v.startsWith('~/')) t.v=HOME+t.v.slice(1); t.v=expandVars(t.v);} });
+  return T; }
+function expandVars(v){ return v.replace(/\$\{?(USER|HOME|PWD|LOGNAME)\}?/g,(_,k)=>({USER,HOME,PWD:sh.cwd,LOGNAME:USER})[k]); }
+function globRe(p){ return new RegExp('^'+p.replace(/[.+^${}()|[\]\\]/g,'\\$&').replace(/\*/g,'.*').replace(/\?/g,'.')+'$'); }
+function expandGlob(t){ if(!t.glob||t.q) return [t.v]; const dir=t.v.includes('/')?t.v.slice(0,t.v.lastIndexOf('/'))||'/':'.'; const pat=t.v.slice(t.v.lastIndexOf('/')+1); const d=get(dir); if(!d||d.t!=='d') return [t.v];
+  const re=globRe(pat); const m=Object.keys(d.ch).filter(n=>!n.startsWith('.')&&re.test(n)).sort(); if(!m.length) return [t.v]; return m.map(n=>dir==='.'?n:dir.replace(/\/$/,'')+'/'+n); }
+/* ---------- ejecución ---------- */
+function run(line){
+  sh.tick++; const T=tokenize(line);
+  if(!T.length) return {out:'',err:'',code:0};
+  // separar por && || ;
+  const seq=[]; let cur=[], conn=null;
+  for(const t of T){ if(t.t==='op'&&(t.v==='&&'||t.v===';'||t.v==='||')){ seq.push({toks:cur,conn}); conn=t.v; cur=[]; } else cur.push(t); }
+  seq.push({toks:cur,conn});
+  let out='', err='', code=0;
+  for(const s of seq){ if(s.conn==='&&'&&code!==0) continue; if(s.conn==='||'&&code===0) continue; if(!s.toks.length) continue;
+    const r=pipeline(s.toks, line); out+=r.out; err+=r.err; code=r.code; }
+  return {out,err,code};
+}
+function pipeline(toks, line){
+  const parts=[]; let cur=[]; for(const t of toks){ if(t.t==='op'&&t.v==='|'){parts.push(cur);cur=[];} else cur.push(t);} parts.push(cur);
+  let stdin=null, out='', err='', code=0;
+  parts.forEach((p,idx)=>{
+    const words=[]; let redir=null, append=false, errToOut=false, errFile=null, inFile=null;
+    for(let i=0;i<p.length;i++){ const t=p[i];
+      if(t.t==='op'){ if(t.v==='>'||t.v==='>>'){redir=p[i+1]&&p[i+1].v; append=t.v==='>>'; i++;} else if(t.v==='&>>'){redir=p[i+1]&&p[i+1].v; append=true; errToOut=true; i++;} else if(t.v==='2>&1') errToOut=true; else if(t.v==='2>'){errFile=p[i+1]&&p[i+1].v;i++;} else if(t.v==='<'){inFile=p[i+1]&&p[i+1].v;i++;} }
+      else words.push(...expandGlob(t)); }
+    if(inFile){ const n=get(inFile); stdin=n&&n.t==='f'?n.c:''; }
+    let r=exec(words, stdin, {pipe:parts.length>1, line, last:idx===parts.length-1});
+    let o=r.out, e=r.err||'';
+    if(errToOut){ o+=e; e=''; }
+    if(errFile){ writeFile(errFile,e,false); e=''; }
+    if(redir){ const wr=writeFile(redir,o,append); if(wr) e+=wr; o=''; }
+    err+=e; code=r.code;
+    if(idx<parts.length-1) stdin=o; else out=o;
+  });
+  return {out,err,code};
+}
+function writeFile(path,data,append){ const pp=parentOf(path); if(!pp.dir||pp.dir.t!=='d') return `bash: ${path}: No such file or directory\n`;
+  let n=pp.dir.ch[pp.name]; if(n&&n.t==='d') return `bash: ${path}: Is a directory\n`;
+  if(n&&!sh.root&&n.o!==USER) return `bash: ${path}: Permission denied\n`;
+  if(n&&!(n.p&0o200)&&!sh.root) return `bash: ${path}: Permission denied\n`;
+  if(!n){ if(!canW(pp.dir)) return `bash: ${path}: Permission denied\n`; n=pp.dir.ch[pp.name]=F('',0o666&~sh.umask,USER,USER,now()); }
+  n.c=append?n.c+data:data; n.sz=undefined; n.m=now(); pp.dir.m=now(); return ''; }
+const ERR=(m,c)=>({out:'',err:m+'\n',code:c||1});
+const OK=o=>({out:o||'',err:'',code:0});
+function flagsOf(args){ const f=new Set(), rest=[]; for(const a of args){ if(/^-[a-zA-Z]+$/.test(a)) a.slice(1).split('').forEach(c=>f.add(c)); else rest.push(a);} return {f,rest}; }
+function readInput(files,stdin,cmd){ if(!files.length) return {txt:stdin==null?'':stdin}; let txt='', err=''; for(const fn of files){ const n=get(fn); if(!n) err+=`${cmd}: ${fn}: No such file or directory\n`; else if(n.t==='d') err+=`${cmd}: ${fn}: Is a directory\n`; else if(!canRead(n)) err+=`${cmd}: ${fn}: Permission denied\n`; else txt+=n.c; } return {txt,err}; }
+const lines=t=>{ if(!t) return []; const L=t.split('\n'); if(L[L.length-1]==='') L.pop(); return L; };
+const join=L=>L.length?L.join('\n')+'\n':'';
+
+function exec(w,stdin,ctx){
+  if(!w.length) return OK();
+  if(sh.aliases[w[0]]) { const ex=tokenize(sh.aliases[w[0]]).filter(t=>t.t==='w').map(t=>t.v); w=ex.concat(w.slice(1)); }
+  const cmd=w[0], a=w.slice(1);
+  const C=CMDS[cmd];
+  if(!C) return ERR(`${cmd}: command not found`,127);
+  try{ return C(a,stdin,ctx); }catch(e){ return ERR(`${cmd}: error interno del simulador (${e.message})`); }
+}
+/* ---------- comandos ---------- */
+function lsLine(name,n,H){ return [permStr(n), n.t==='d'?2:1, n.o, n.g, H?human(size(n)):size(n), lsDate(n.m), name]; }
+function fmtRows(rows){ const wd=[0,0,0,0,0]; rows.forEach(r=>{for(let i=1;i<5;i++)wd[i]=Math.max(wd[i],String(r[i]).length);}); return rows.map(r=>`${r[0]} ${pad(r[1],wd[1])} ${pad(r[2],wd[2],1)} ${pad(r[3],wd[3],1)} ${pad(r[4],wd[4])} ${r[5]} ${r[6]}`); }
+const CMDS={
+ pwd:()=>OK(sh.cwd+'\n'),
+ cd:(a)=>{ const t=a[0]==null?HOME:a[0]==='-'?(sh.old||HOME):a[0]; const n=get(t); if(!n) return ERR(`bash: cd: ${a[0]}: No such file or directory`); if(n.t!=='d') return ERR(`bash: cd: ${a[0]}: Not a directory`); if(!sh.root&&n.o!==USER&&!(n.p&0o001)&&n!==root) return ERR(`bash: cd: ${a[0]}: Permission denied`); sh.old=sh.cwd; sh.cwd=norm(t); return OK(a[0]==='-'?sh.cwd+'\n':''); },
+ ls:(a)=>{ const {f,rest}=flagsOf(a); const L=f.has('l'), A=f.has('a'), H=f.has('h'), Tm=f.has('t'), R=f.has('r'), Dd=f.has('d'), S=f.has('S');
+   const targets=rest.length?rest:['.']; let out='', err='';
+   const sortE=(arr)=>{ arr.sort((x,y)=>Tm?(y[1].m-x[1].m):S?(size(y[1])-size(x[1])):x[0].replace(/^\./,'').toLowerCase().localeCompare(y[0].replace(/^\./,'').toLowerCase())); if(R) arr.reverse(); return arr; };
+   const files=[], dirs=[];
+   targets.forEach(t=>{ const n=get(t); if(!n){err+=`ls: cannot access '${t}': No such file or directory\n`;return;} if(n.t==='d'&&!Dd) dirs.push([t,n]); else files.push([t,n]); });
+   if(files.length){ const e=sortE(files.slice()); out+=L?fmtRows(e.map(([nm,n])=>lsLine(nm,n,H))).join('\n')+'\n':e.map(x=>x[0]).join('  ')+'\n'; }
+   dirs.forEach(([t,n],k)=>{ if(!sh.root&&n.o!==USER&&!(n.p&0o004)&&!((n.g===USER)&&(n.p&0o040))){err+=`ls: cannot open directory '${t}': Permission denied\n`;return;}
+     let e=Object.entries(n.ch).filter(([nm])=>A||!nm.startsWith('.'));
+     if(A){ e.push(['.',n]); e.push(['..',get(norm(t)+'/..')||n]); }
+     e=sortE(e); if(A&&!Tm){ const dot=e.filter(x=>x[0]==='.'||x[0]==='..'); const rest2=e.filter(x=>x[0]!=='.'&&x[0]!=='..'); e=R?rest2.concat(dot.reverse()):dot.sort().concat(rest2); }
+     if(dirs.length>1||files.length) out+=(files.length||k?'\n':'')+t+':\n';
+     if(L){ const tot=e.filter(x=>x[0]!=='.'&&x[0]!=='..').reduce((s,x)=>s+blocks(x[1]),0)+(A?8:0); out+='total '+(H?human(tot*1024):tot)+'\n'; if(e.length) out+=fmtRows(e.map(([nm,x])=>lsLine(nm,x,H))).join('\n')+'\n'; }
+     else if(e.length) out+=e.map(x=>x[0]).join('  ')+'\n'; });
+   return {out,err,code:err?2:0}; },
+ mkdir:(a)=>{ const {f,rest}=flagsOf(a); let err=''; if(!rest.length) return ERR('mkdir: missing operand');
+   rest.forEach(p=>{ const full=norm(p); if(get(full)){ if(!f.has('p')) err+=`mkdir: cannot create directory ‘${p}’: File exists\n`; return; }
+     const parts=full.split('/').filter(Boolean); let cur=root;
+     for(let i=0;i<parts.length;i++){ const x=parts[i]; if(!cur.ch[x]){ if(!canW(cur)){ err+=`mkdir: cannot create directory ‘${p}’: Permission denied\n`; return; } if(i<parts.length-1&&!f.has('p')){ err+=`mkdir: cannot create directory ‘${p}’: No such file or directory\n`; return; } cur.ch[x]=D(0o777&~sh.umask,USER,USER,now()); cur.m=now(); } cur=cur.ch[x]; } });
+   return {out:'',err,code:err?1:0}; },
+ rmdir:(a)=>{ let err=''; a.forEach(p=>{ const n=get(p); if(!n) err+=`rmdir: failed to remove '${p}': No such file or directory\n`; else if(n.t!=='d') err+=`rmdir: failed to remove '${p}': Not a directory\n`; else if(Object.keys(n.ch).length) err+=`rmdir: failed to remove '${p}': Directory not empty\n`; else { const pp=parentOf(p); delete pp.dir.ch[pp.name]; } }); return {out:'',err,code:err?1:0}; },
+ rm:(a)=>{ const {f,rest}=flagsOf(a); let err=''; rest.forEach(p=>{ const n=get(p); if(!n){ if(!f.has('f')) err+=`rm: cannot remove '${p}': No such file or directory\n`; return; } if(n.t==='d'&&!f.has('r')&&!f.has('R')){ err+=`rm: cannot remove '${p}': Is a directory\n`; return; } const pp=parentOf(p); delete pp.dir.ch[pp.name]; }); return {out:'',err,code:err?1:0}; },
+ touch:(a)=>{ let err=''; a.forEach(p=>{ const n=get(p); if(n){ n.m=now(); return; } const pp=parentOf(p); if(!pp.dir) { err+=`touch: cannot touch '${p}': No such file or directory\n`; return; } if(!canW(pp.dir)){ err+=`touch: cannot touch '${p}': Permission denied\n`; return; } pp.dir.ch[pp.name]=F('',0o666&~sh.umask,USER,USER,now()); }); return {out:'',err,code:err?1:0}; },
+ cp:(a)=>{ const {f,rest}=flagsOf(a); if(rest.length<2) return ERR('cp: missing destination file operand'); const dst=rest.pop(); let err='';
+   const clone=n=>n.t==='d'?Object.assign(D(n.p,USER,USER,now()),{ch:Object.fromEntries(Object.entries(n.ch).map(([k,v])=>[k,clone(v)]))}):F(n.c,n.p,USER,USER,now(),n.sz);
+   rest.forEach(src=>{ const n=get(src); if(!n){err+=`cp: cannot stat '${src}': No such file or directory\n`;return;} if(n.t==='d'&&!f.has('r')&&!f.has('R')&&!f.has('a')){err+=`cp: -r not specified; omitting directory '${src}'\n`;return;}
+     const d=get(dst); if(d&&d.t==='d'){ d.ch[src.split('/').filter(Boolean).pop()]=clone(n);} else { const pp=parentOf(dst); if(!pp.dir){err+=`cp: cannot create '${dst}': No such file or directory\n`;return;} pp.dir.ch[pp.name]=clone(n);} });
+   return {out:'',err,code:err?1:0}; },
+ mv:(a)=>{ if(a.length<2) return ERR('mv: missing destination file operand'); const dst=a[a.length-1]; let err='';
+   a.slice(0,-1).forEach(src=>{ const n=get(src); if(!n){err+=`mv: cannot stat '${src}': No such file or directory\n`;return;} const sp=parentOf(src); const d=get(dst);
+     if(d&&d.t==='d'){ d.ch[sp.name]=n; } else { const pp=parentOf(dst); if(!pp.dir){err+=`mv: cannot move '${src}' to '${dst}': No such file or directory\n`;return;} pp.dir.ch[pp.name]=n; } delete sp.dir.ch[sp.name]; n.m=now(); });
+   return {out:'',err,code:err?1:0}; },
+ cat:(a,stdin)=>{ const r=readInput(a,stdin,'cat'); return {out:r.txt,err:r.err||'',code:r.err?1:0}; },
+ echo:(a)=>{ let e=false,nl=true; while(a[0]==='-e'||a[0]==='-n'||a[0]==='-ne'||a[0]==='-en'){ if(a[0].includes('e'))e=true; if(a[0].includes('n'))nl=false; a=a.slice(1);} let s=a.join(' '); if(e) s=s.replace(/\\n/g,'\n').replace(/\\t/g,'\t'); return OK(s+(nl?'\n':'')); },
+ head:(a,stdin)=>headTail(a,stdin,'head'),
+ tail:(a,stdin)=>headTail(a,stdin,'tail'),
+ wc:(a,stdin)=>{ const {f,rest}=flagsOf(a); const sel=['l','w','c','m'].filter(x=>f.has(x)); const show=sel.length?sel:['l','w','c']; let out='',err='';
+   const cnt=t=>({l:(t.match(/\n/g)||[]).length,w:(t.match(/\S+/g)||[]).length,c:new TextEncoder().encode(t).length,m:t.length});
+   const items=[]; if(!rest.length) items.push([null,cnt(stdin||'')]); else rest.forEach(fn=>{ const n=get(fn); if(!n) err+=`wc: ${fn}: No such file or directory\n`; else if(n.t==='d') err+=`wc: ${fn}: Is a directory\n`; else items.push([fn,cnt(n.c)]); });
+   const wdt=(!rest.length&&show.length>1)?7:Math.max(...items.map(([,c])=>Math.max(...show.map(k=>String(c[k]).length))),1);
+   items.forEach(([fn,c])=>{ out+=show.map(k=>pad(c[k],show.length>1?wdt:(rest.length?1:1))).join(' ')+(fn?' '+fn:'')+'\n'; });
+   return {out,err,code:err?1:0}; },
+ tr:(a,stdin)=>{ if(a.length<2) return ERR("tr: missing operand"); const ex=s=>{ s=s.replace(/\[:lower:\]/g,'a-z').replace(/\[:upper:\]/g,'A-Z').replace(/\\n/g,'\n').replace(/\\t/g,'\t'); const o=[]; for(let i=0;i<s.length;i++){ if(s[i+1]==='-'&&s[i+2]!==undefined){ for(let c=s.charCodeAt(i);c<=s.charCodeAt(i+2);c++) o.push(String.fromCharCode(c)); i+=2;} else o.push(s[i]); } return o; };
+   const s1=ex(a[0]), s2=ex(a[1]); const map={}; s1.forEach((c,i)=>map[c]=s2[Math.min(i,s2.length-1)]); return OK((stdin||'').split('').map(c=>c in map?map[c]:c).join('')); },
+ grep:(a,stdin,ctx)=>{ const {f,rest}=flagsOf(a.filter(x=>x!=='--color=auto')); if(!rest.length) return ERR('Usage: grep [OPTION]... PATTERNS [FILE]...',2); const pat=rest[0], files=rest.slice(1);
+   let re; try{ re=new RegExp(pat,f.has('i')?'i':''); }catch(e){ re=new RegExp(pat.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),f.has('i')?'i':''); }
+   if(f.has('w')) re=new RegExp('\\b(?:'+re.source+')\\b',re.flags);
+   let out='',err='',any=false; const srcs=files.length?files:[null];
+   srcs.forEach(fn=>{ let t; if(fn===null) t=stdin||''; else { const n=get(fn); if(!n){err+=`grep: ${fn}: No such file or directory\n`;return;} if(n.t==='d'){err+=`grep: ${fn}: Is a directory\n`;return;} if(!canRead(n)){err+=`grep: ${fn}: Permission denied\n`;return;} t=n.c; }
+     const L=lines(t); let c=0; L.forEach((ln,i)=>{ const m=re.test(ln)!==f.has('v'); if(m){ c++; any=true; if(!f.has('c')) out+=(files.length>1?fn+':':'')+(f.has('n')?(i+1)+':':'')+ln+'\n'; } });
+     if(f.has('c')) out+=(files.length>1?fn+':':'')+c+'\n'; });
+   return {out,err,code:err?2:any?0:1}; },
+ find:(a)=>{ let paths=[], i=0; while(i<a.length&&!a[i].startsWith('-')) paths.push(a[i++]); if(!paths.length) paths=['.']; let name=null,iname=null,type=null; let out='',err='';
+   for(;i<a.length;i++){ if(a[i]==='-name') name=a[++i]; else if(a[i]==='-iname') iname=a[++i]; else if(a[i]==='-type') type=a[++i]; }
+   const reN=name?globRe(name):iname?new RegExp(globRe(iname).source,'i'):null;
+   const walk=(p,n,nm)=>{ const ok=(!reN||reN.test(nm))&&(!type||(type==='d'?n.t==='d':n.t==='f')); if(ok) out+=p+'\n'; if(n.t==='d'){ if(!sh.root&&n.o!==USER&&!(n.p&0o005)){ err+=`find: '${p}': Permission denied\n`; return;} Object.keys(n.ch).sort().forEach(k=>walk(p.replace(/\/$/,'')+'/'+k,n.ch[k],k)); } };
+   paths.forEach(p=>{ const n=get(p); if(!n){err+=`find: '${p}': No such file or directory\n`;return;} walk(p,n,p.split('/').filter(Boolean).pop()||p); });
+   return {out,err,code:err?1:0}; },
+ cut:(a,stdin)=>{ let d='\t',fl=null,cl=null; const files=[]; for(let i=0;i<a.length;i++){ const x=a[i]; if(x.startsWith('-d')) d=x.length>2?x.slice(2):a[++i]; else if(x.startsWith('-f')) fl=x.length>2?x.slice(2):a[++i]; else if(x.startsWith('-c')) cl=x.length>2?x.slice(2):a[++i]; else files.push(x); }
+   const rng=s=>s.split(',').flatMap(p=>{ const [x,y]=p.split('-'); const A=x?+x:1, B=p.includes('-')?(y?+y:999):A; return Array.from({length:B-A+1},(_,k)=>A+k); });
+   const r=readInput(files,stdin,'cut'); if(!fl&&!cl) return ERR('cut: you must specify a list of bytes, characters, or fields');
+   const L=lines(r.txt).map(ln=>{ if(cl){ const idx=rng(cl); return idx.map(k=>ln[k-1]||'').join(''); } const parts=ln.split(d); if(parts.length===1) return ln; const idx=rng(fl); return idx.filter(k=>k<=parts.length).map(k=>parts[k-1]).join(d); });
+   return {out:join(L),err:r.err||'',code:0}; },
+ sort:(a,stdin)=>{ let r=false,n=false,u=false,t=null,k=null; const files=[];
+   for(let i=0;i<a.length;i++){ const x=a[i]; if(x.startsWith('-')&&x.length>1){ for(let j=1;j<x.length;j++){ const c=x[j]; if(c==='r')r=true; else if(c==='n')n=true; else if(c==='u')u=true; else if(c==='t'){ t=x.slice(j+1)||a[++i]; break; } else if(c==='k'){ const rest=x.slice(j+1); const v=rest||a[++i]; const m=/^(\d+)(n?)/.exec(v)||[0,v,'']; k=+m[1]; if(m[2]) n=true; break; } } } else files.push(x); }
+   const rd=readInput(files,stdin,'sort'); let L=lines(rd.txt);
+   const key=ln=>{ if(!k) return ln; const parts=t?ln.split(t):ln.trim().split(/\s+/); return parts[k-1]||''; };
+   L.sort((x,y)=>{ const A=key(x),B=key(y); let c=n?((parseFloat(A)||0)-(parseFloat(B)||0)):A.localeCompare(B,'en'); if(c===0) c=x.localeCompare(y,'en'); return c; });
+   if(r) L.reverse(); if(u) L=L.filter((x,i)=>i===0||x!==L[i-1]);
+   return {out:join(L),err:rd.err||'',code:0}; },
+ du:(a)=>{ const {f,rest}=flagsOf(a); const H=f.has('h'), S=f.has('s'), Cc=f.has('c'); const targets=rest.length?rest:['.']; let out='',err='',total=0;
+   const fmt=kb=>H?(kb===0?'0':human(kb*1024)):String(kb);
+   const walk=(p,n,top)=>{ if(n.t==='f'){ const b=blocks(n); if(top||f.has('a')) out+=fmt(b)+'\t'+p+'\n'; return b; } let s=4; Object.keys(n.ch).sort().forEach(k=>{ s+=walk(p.replace(/\/$/,'')+'/'+k,n.ch[k],false); }); if(!S||top) out+=(S&&!top)?'':fmt(s)+'\t'+p+'\n'; return s; };
+   targets.forEach(t=>{ const n=get(t); if(!n){err+=`du: cannot access '${t}': No such file or directory\n`;return;}
+     if(S){ const save=out; out=''; const s=walk(t,n,true); out=save+fmt(s)+'\t'+t+'\n'; total+=s; } else total+=walk(t,n,true); });
+   if(Cc) out+=fmt(total)+'\ttotal\n';
+   return {out,err,code:err?1:0}; },
+ df:(a)=>{ const {f,rest}=flagsOf(a); const H=f.has('h'), T=f.has('T');
+   const R=[['tmpfs','tmpfs',401172,1104,400068,'1%','/run'],['/dev/sda2','ext4',41022688,12345678,26560144,'32%','/'],['tmpfs','tmpfs',2005856,0,2005856,'0%','/dev/shm'],['tmpfs','tmpfs',5120,0,5120,'0%','/run/lock'],['/dev/sda1','vfat',524252,6220,518032,'2%','/boot/efi'],['tmpfs','tmpfs',401168,4,401164,'1%','/run/user/1001']];
+   let rows=R; if(rest.length){ rows=rest.map(p=>{ const full=norm(p); return full.startsWith('/boot/efi')?R[4]:full.startsWith('/dev/shm')?R[2]:R[1]; }); }
+   const hs=kb=>kb===0?'0':human(kb*1024);
+   const head=['Filesystem'].concat(T?['Type']:[],H?['Size','Used','Avail']:['1K-blocks','Used','Available'],['Use%','Mounted on']);
+   const body=rows.map(r=>[r[0]].concat(T?[r[1]]:[],H?[hs(r[2]),hs(r[3]),hs(r[4])]:[r[2],r[3],r[4]],[r[5],r[6]]));
+   const all=[head].concat(body); const w=head.map((_,i)=>Math.max(...all.map(r=>String(r[i]).length)));
+   return OK(all.map(r=>r.map((c,i)=>i===0||(T&&i===1)||i===r.length-1?pad(c,w[i],1):pad(c,w[i])).join(' ').trimEnd()).join('\n')+'\n'); },
+ free:(a)=>{ const H=a.includes('-h'); const m=[4011720,1257604,1148220,12288,1605896,2491432], s=[2097148,0,2097148];
+   const f=kb=>H?(kb===0?'0B':(kb>=1048576?(kb/1048576).toFixed(1)+'Gi':Math.round(kb/1024)+'Mi')):String(kb);
+   const hd='               total        used        free      shared  buff/cache   available';
+   return OK(hd+'\nMem:  '+m.map(x=>pad(f(x),12)).join('')+'\nSwap: '+s.map(x=>pad(f(x),12)).join('')+'\n'); },
+ uptime:()=>{ const d=new Date(now()); const z=n=>String(n).padStart(2,'0'); const l=[0.15,0.20,0.18].map((x,i)=>(x+((sh.tick*7+i*3)%9)/100).toFixed(2)); return OK(` ${z(d.getHours())}:${z(d.getMinutes())}:${z(d.getSeconds())} up 3 days,  4:${z(12+Math.floor(sh.tick/3)%40)},  2 users,  load average: ${l.join(', ')}\n`); },
+ who:(a)=>a.includes('-q')?OK('lucas    ana\n# users=2\n'):OK('lucas    pts/0        2026-10-27 16:02 (190.12.3.4)\nana      pts/1        2026-10-27 16:10 (181.4.5.6)\n'),
+ whoami:()=>OK(sh.root?'root\n':USER+'\n'),
+ id:()=>OK(sh.root?'uid=0(root) gid=0(root) groups=0(root)\n':'uid=1001(lucas) gid=1001(lucas) groups=1001(lucas),100(users)\n'),
+ hostname:(a)=>a.includes('-I')?OK('192.168.1.50 \n'):OK(HOST+'\n'),
+ uname:(a)=>{ const {f}=flagsOf(a); const P={s:'Linux',n:HOST,r:'5.15.0-91-generic',v:'#101-Ubuntu SMP Tue Nov 14 13:30:08 UTC 2023',m:'x86_64',o:'GNU/Linux'}; if(f.has('a')) return OK(`Linux ${HOST} 5.15.0-91-generic #101-Ubuntu SMP Tue Nov 14 13:30:08 UTC 2023 x86_64 x86_64 x86_64 GNU/Linux\n`); const ks=['s','n','r','v','m','o'].filter(k=>f.has(k)); return OK((ks.length?ks:['s']).map(k=>P[k]).join(' ')+'\n'); },
+ date:(a)=>{ const d=new Date(now()); const z=n=>String(n).padStart(2,'0'); const fmt=a.find(x=>x.startsWith('+'));
+   const MF=['January','February','March','April','May','June','July','August','September','October','November','December'];
+   if(!fmt) return OK(`${DAY[d.getDay()].slice(0,3)} ${MON[d.getMonth()]} ${d.getDate()} ${z(d.getHours())}:${z(d.getMinutes())}:${z(d.getSeconds())} -03 ${d.getFullYear()}\n`);
+   const R={Y:d.getFullYear(),m:z(d.getMonth()+1),d:z(d.getDate()),H:z(d.getHours()),M:z(d.getMinutes()),S:z(d.getSeconds()),A:DAY[d.getDay()],a:DAY[d.getDay()].slice(0,3),B:MF[d.getMonth()],b:MON[d.getMonth()],y:String(d.getFullYear()).slice(2),j:'300',Z:'-03','%':'%'};
+   return OK(fmt.slice(1).replace(/%([a-zA-Z%])/g,(_,c)=>c in R?R[c]:'%'+c)+'\n'); },
+ chmod:(a)=>{ const {f,rest}=(()=>{const R=a.filter(x=>x==='-R'||x==='-v');return {f:R,rest:a.filter(x=>!R.includes(x))};})(); if(rest.length<2) return ERR('chmod: missing operand'); const mode=rest[0]; let err='';
+   rest.slice(1).forEach(p=>{ const n=get(p); if(!n){err+=`chmod: cannot access '${p}': No such file or directory\n`;return;} if(!sh.root&&n.o!==USER){err+=`chmod: changing permissions of '${p}': Operation not permitted\n`;return;}
+     if(/^[0-7]{3,4}$/.test(mode)){ n.p=parseInt(mode,8); return; }
+     let p2=n.p&0o7777; for(const cl of mode.split(',')){ const m=/^([ugoa]*)([+\-=])([rwxt]*)$/.exec(cl); if(!m){err+=`chmod: invalid mode: ‘${mode}’\n`;return;} const who=m[1]||'a'; let bits=0; if(m[3].includes('r'))bits|=4; if(m[3].includes('w'))bits|=2; if(m[3].includes('x'))bits|=1;
+       const sh_=[]; if(who.includes('u')||who.includes('a'))sh_.push(6); if(who.includes('g')||who.includes('a'))sh_.push(3); if(who.includes('o')||who.includes('a'))sh_.push(0);
+       sh_.forEach(s=>{ const mask=7<<s; if(m[2]==='+') p2|=bits<<s; else if(m[2]==='-') p2&=~(bits<<s); else p2=(p2&~mask)|(bits<<s); }); }
+     n.p=p2; });
+   return {out:'',err,code:err?1:0}; },
+ umask:(a)=>{ if(!a.length) return OK(sh.umask.toString(8).padStart(4,'0')+'\n'); if(!/^[0-7]{1,4}$/.test(a[0])) return ERR(`bash: umask: ${a[0]}: octal number out of range`); sh.umask=parseInt(a[0],8); return OK(); },
+ stat:(a)=>{ let fmt=null; const files=[]; for(let i=0;i<a.length;i++){ if(a[i]==='-c') fmt=a[++i]; else if(a[i].startsWith('--format=')) fmt=a[i].slice(9); else files.push(a[i]); } let out='',err='';
+   files.forEach(p=>{ const n=get(p); if(!n){err+=`stat: cannot statx '${p}': No such file or directory\n`;return;} const full=norm(p);
+     if(fmt){ out+=fmt.replace(/%([aAnsUGi])/g,(_,c)=>({a:(n.p&0o7777).toString(8),A:permStr(n),n:p,s:size(n),U:n.o,G:n.g,i:ino(full)})[c])+'\n'; return; }
+     const uid={root:0,lucas:1001,ana:1002,profe:1000,syslog:104}[n.o]??0, gid={root:0,lucas:1001,ana:1002,adm:4,shadow:42,syslog:110,utmp:43}[n.g]??0;
+     out+=`  File: ${p}\n  Size: ${pad(size(n),-1,1).padEnd(10)}\tBlocks: ${String(blocks(n)*2).padEnd(10)} IO Block: 4096   ${n.t==='d'?'directory':size(n)?'regular file':'regular empty file'}\nDevice: 802h/2050d\tInode: ${String(ino(full)).padEnd(11)} Links: ${n.t==='d'?2:1}\nAccess: (${(n.p&0o7777).toString(8).padStart(4,'0')}/${permStr(n)})  Uid: (${pad(uid,5)}/${pad(n.o,8,1)})   Gid: (${pad(gid,5)}/${pad(n.g,8,1)})\nAccess: ${fdate(Math.max(n.m,now()-60000))}\nModify: ${fdate(n.m)}\nChange: ${fdate(n.m)}\n Birth: ${fdate(n.m)}\n`; });
+   return {out,err,code:err?1:0}; },
+ sha256sum:(a)=>{ const check=a.includes('-c')||a.includes('--check'); const files=a.filter(x=>!x.startsWith('-')); let out='',err='',bad=0;
+   if(!check){ files.forEach(p=>{ const n=get(p); if(!n){err+=`sha256sum: ${p}: No such file or directory\n`;return;} if(n.t==='d'){err+=`sha256sum: ${p}: Is a directory\n`;return;} out+=sha256(n.c)+'  '+p+'\n'; }); return {out,err,code:err?1:0}; }
+   files.forEach(p=>{ const n=get(p); if(!n){err+=`sha256sum: ${p}: No such file or directory\n`;return;} lines(n.c).forEach(ln=>{ const m=/^([0-9a-f]{64})\s+\*?(.+)$/.exec(ln); if(!m) return; const t=get(m[2]); if(!t){ out+=`${m[2]}: FAILED open or read\n`; bad++; return; } if(sha256(t.c)===m[1]) out+=`${m[2]}: OK\n`; else { out+=`${m[2]}: FAILED\n`; bad++; } }); });
+   if(bad) err+=`sha256sum: WARNING: ${bad} computed checksum${bad>1?'s':''} did NOT match\n`;
+   return {out,err,code:bad||err?1:0}; },
+ zip:(a)=>{ const {f,rest}=flagsOf(a); if(rest.length<2) return ERR('zip error: Nothing to do!',12); const zipf=rest[0]; let out=f.has('e')?'Enter password: ********\nVerify password: ********\n':''; let total=0;
+   const add=(p,n)=>{ out+=`  adding: ${p}${n.t==='d'?'/':''} (stored 0%)\n`; if(n.t==='f') total+=size(n); else if(f.has('r')) Object.keys(n.ch).sort().forEach(k=>add(p.replace(/\/$/,'')+'/'+k,n.ch[k])); };
+   rest.slice(1).forEach(p=>{ const n=get(p); if(!n){ out+=`\tzip warning: name not matched: ${p}\n`; return;} add(p.replace(/\/$/,''),n); });
+   writeFile(zipf,'(archivo zip'+(f.has('e')?' cifrado':'')+')'.padEnd(Math.max(180,total+160),' '),false); return OK(out); },
+ tar:(a)=>{ const fl=(a[0]||'').replace(/^-/,''); const fi=a.indexOf('-f'); let arch=null, paths=[];
+   if(fl.includes('f')){ arch=a[1]; paths=a.slice(2); } else return ERR('tar: Refusing to write archive contents to terminal (missing -f option?)',2);
+   const v=fl.includes('v');
+   if(fl.includes('c')){ let out=''; let total=0; const add=(p,n)=>{ if(v) out+=p+(n.t==='d'?'/':'')+'\n'; if(n.t==='f') total+=size(n); else Object.keys(n.ch).sort().forEach(k=>add(p.replace(/\/$/,'')+'/'+k,n.ch[k])); };
+     paths.forEach(p=>{ const n=get(p); if(!n){ out+=`tar: ${p}: Cannot stat: No such file or directory\n`; return;} add(p.replace(/\/$/,''),n); }); sh.tars=sh.tars||{}; sh.tars[norm(arch)]=out; writeFile(arch,'(tar.gz)'.padEnd(Math.max(120,Math.round(total*.4)+100),' '),false); return OK(out); }
+   if(fl.includes('t')||fl.includes('x')){ const n=get(arch); if(!n) return ERR(`tar: ${arch}: Cannot open: No such file or directory`,2); return OK(v?((sh.tars||{})[norm(arch)]||''):''); }
+   return ERR('tar: You must specify one of the -Acdtrux options',2); },
+ rsync:(a)=>{ const ex=[]; const args=[]; for(let i=0;i<a.length;i++){ if(a[i]==='--exclude') ex.push(a[++i]); else if(a[i].startsWith('--exclude=')) ex.push(a[i].slice(10)); else args.push(a[i]); } const {f,rest}=flagsOf(args); if(rest.length<2) return ERR('rsync: missing destination');
+   const [src,dst]=rest; const sn=get(src); if(!sn) return ERR(`rsync: change_dir "${src}" failed: No such file or directory (2)`,23);
+   const exRe=ex.map(globRe); let dn=get(dst); if(!dn){ const pp=parentOf(dst); if(!pp.dir) return ERR(`rsync: mkdir "${dst}" failed: No such file or directory (2)`,11); dn=pp.dir.ch[pp.name]=D(0o775,USER,USER,now()); }
+   let target=dn, prefix=''; if(sn.t==='d'&&!src.endsWith('/')){ const nm=src.split('/').filter(Boolean).pop(); if(!dn.ch[nm]) dn.ch[nm]=D(sn.p,USER,USER,now()); target=dn.ch[nm]; prefix=nm+'/'; }
+   let list=[], bytes=0, totalSize=0;
+   const sync=(s,d,rel)=>{ Object.keys(s.ch).sort().forEach(k=>{ if(exRe.some(r=>r.test(k))) return; const c=s.ch[k]; if(c.t==='d'){ if(!d.ch[k]){ d.ch[k]=D(c.p,USER,USER,c.m); list.push(prefix+rel+k+'/'); } sync(c,d.ch[k],rel+k+'/'); } else { totalSize+=size(c); if(!d.ch[k]||d.ch[k].c!==c.c){ d.ch[k]=F(c.c,c.p,USER,USER,c.m); list.push(prefix+rel+k); bytes+=size(c); } } }); };
+   if(sn.t==='d') sync(sn,target,''); else { const nm=src.split('/').pop(); totalSize=size(sn); if(!dn.ch[nm]||dn.ch[nm].c!==sn.c){ dn.ch[nm]=F(sn.c,sn.p,USER,USER,sn.m); list.push(nm); bytes=size(sn);} }
+   const v=f.has('v'); const sent=bytes+90+list.length*45, recv=19+list.length*6;
+   const out=v?`sending incremental file list\n${list.length||sn.t==='d'?(src.endsWith('/')&&list.length?'./\n':''):''}${list.map(x=>x+'\n').join('')}\nsent ${sent} bytes  received ${recv} bytes  ${((sent+recv)/0.5).toFixed(2)} bytes/sec\ntotal size is ${totalSize}  speedup is ${(totalSize/(sent+recv)||0).toFixed(2)}\n`:'';
+   return OK(out); },
+ crontab:(a)=>{ if(a.includes('-l')) return sh.cron?OK(sh.cron):ERR('no crontab for lucas'); if(a.includes('-r')){ sh.cron=''; return OK(); } if(a.includes('-e')){ if(sh.onCronEdit) sh.onCronEdit(); return OK('(se abrió el editor del crontab: escribí la línea en el cuadro de abajo y tocá Guardar)\n'); } return ERR('crontab: usage error: file name or (-l/-e/-r) must be specified'); },
+ ps:(a,stdin,ctx)=>{ const line=ctx.line||''; const greps=/\|\s*grep\s+(\S+)/.exec(line);
+   const P=[['root',1,'0.0','0.3',167744,11520,'?','Ss','Oct24','0:03','/sbin/init'],['root',412,'0.0','0.4',48212,17804,'?','S<s','Oct24','0:01','/lib/systemd/systemd-journald'],['root',780,'0.0','0.2',15440,9112,'?','Ss','Oct24','0:00','sshd: /usr/sbin/sshd -D'],['root',802,'0.0','0.6',121480,25600,'?','Ssl','Oct24','0:12','/usr/bin/python3 /usr/bin/fail2ban-server -xf start'],['syslog',655,'0.0','0.1',222404,6060,'?','Ssl','Oct24','0:02','/usr/sbin/rsyslogd -n'],['root',690,'0.0','0.0',6896,2948,'?','Ss','Oct24','0:00','/usr/sbin/cron -f'],['ana',2102,'0.0','0.1',8980,5520,'pts/1','Ss+','16:10','0:00','-bash'],['lucas',2345,'0.0','0.1',8980,5604,'pts/0','Ss','16:02','0:00','-bash']];
+   const me=['lucas',2400+(sh.tick%50),'0.0','0.0',10072,3456,'pts/0','R+','16:31','0:00','ps '+a.join(' ')];
+   const g=greps?['lucas',me[1]+1,'0.0','0.0',6480,2240,'pts/0','S+','16:31','0:00','grep --color=auto '+greps[1]]:null;
+   const all=P.concat([me]).concat(g?[g]:[]);
+   const full=a.some(x=>/^a?u?x$|aux|-e|-ef|-A/.test(x));
+   const user=a.includes('-u')?a[a.indexOf('-u')+1]:null;
+   if(a.length===0||(user&&!full)){ const rows=user?all.filter(r=>r[0]===user):all.filter(r=>r[6]==='pts/0'); return OK('    PID TTY          TIME CMD\n'+rows.map(r=>`${pad(r[1],7)} ${pad(r[6],8,1)} 00:00:00 ${r[10].split(' ')[0].replace(/^-/,'')}`).join('\n')+'\n'); }
+   if(a.includes('-ef')||a.includes('-e')||a.includes('-A')) return OK('UID          PID    PPID  C STIME TTY          TIME CMD\n'+all.map(r=>`${pad(r[0],8,1)} ${pad(r[1],7)} ${pad(r[1]===1?0:1,7)}  0 ${pad(r[8],5,1)} ${pad(r[6],8,1)} 00:00:0${r[9].slice(-1)} ${r[10]}`).join('\n')+'\n');
+   return OK('USER         PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND\n'+all.map(r=>`${pad(r[0],8,1)} ${pad(r[1],7)} ${pad(r[2],4)} ${pad(r[3],4)} ${pad(r[4],6)} ${pad(r[5],5)} ${pad(r[6],8,1)} ${pad(r[7],4,1)} ${pad(r[8],5,1)} ${pad(r[9],6)} ${r[10]}`).join('\n')+'\n'); },
+ top:(a)=>{ if(!a.includes('-b')) return OK('(top interactivo se actualiza en pantalla y no termina: en la terminal real se sale con q. Acá usá  top -b -n1  para ver una "foto".)\n');
+   const byMem=a.join(' ').includes('%MEM');
+   let rows=[[802,'root',20,0,121480,25600,9984,'S','0.0','0.6','0:12.04','fail2ban-server'],[1,'root',20,0,167744,11520,8320,'S','0.0','0.3','0:03.10','systemd'],[412,'root',19,-1,48212,17804,16880,'S','0.0','0.4','0:01.22','systemd-journal'],[780,'root',20,0,15440,9112,7680,'S','0.0','0.2','0:00.31','sshd'],[655,'syslog',20,0,222404,6060,4520,'S','0.0','0.1','0:02.48','rsyslogd'],[2345,'lucas',20,0,8980,5604,3800,'S','0.0','0.1','0:00.05','bash'],[2102,'ana',20,0,8980,5520,3760,'S','0.0','0.1','0:00.04','bash'],[690,'root',20,0,6896,2948,2680,'S','0.0','0.1','0:00.02','cron'],[2410,'lucas',20,0,10520,3900,3340,'R','6.2','0.1','0:00.01','top'],[2,'root',20,0,0,0,0,'S','0.0','0.0','0:00.01','kthreadd'],[3,'root',0,-20,0,0,0,'I','0.0','0.0','0:00.00','rcu_gp']];
+   rows=byMem?rows.sort((x,y)=>parseFloat(y[9])-parseFloat(x[9])):rows.sort((x,y)=>parseFloat(y[8])-parseFloat(x[8])||x[0]-y[0]);
+   const up=CMDS.uptime().out.trim();
+   return OK(`top - ${up.replace(/^\s*/,'')}\nTasks: 112 total,   1 running, 111 sleeping,   0 stopped,   0 zombie\n%Cpu(s):  1.3 us,  0.7 sy,  0.0 ni, 97.9 id,  0.0 wa,  0.0 hi,  0.1 si,  0.0 st\nMiB Mem :   3917.7 total,   1121.3 free,   1228.1 used,   1568.3 buff/cache\nMiB Swap:   2048.0 total,   2048.0 free,      0.0 used.   2433.0 avail Mem\n\n    PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND\n`+rows.map(r=>`${pad(r[0],7)} ${pad(r[1],8,1)} ${pad(r[2],3)} ${pad(r[3],3)} ${pad(r[4],7)} ${pad(r[5],6)} ${pad(r[6],6)} ${r[7]} ${pad(r[8],5)} ${pad(r[9],5)} ${pad(r[10],9)} ${r[11]}`).join('\n')+'\n'); },
+ kill:(a)=>a.length?OK():ERR('kill: usage: kill [-s sigspec | -n signum | -sigspec] pid'),
+ ping:(a)=>{ const ci=a.indexOf('-c'); let c=ci>=0?+a[ci+1]:(a.find(x=>/^-c\d+$/.test(x))?+a.find(x=>/^-c\d+$/.test(x)).slice(2):null); const host=a.filter((x,i)=>!x.startsWith('-')&&!/^\d+$/.test(x)&&(ci<0||i!==ci+1)).pop(); if(!host) return ERR('ping: usage error: Destination address required',2);
+   const IP={'127.0.0.1':'127.0.0.1','localhost':'127.0.0.1','google.com':'142.251.133.14','www.google.com':'142.251.133.14','8.8.8.8':'8.8.8.8','192.168.1.1':'192.168.1.1','usal.edu.ar':'200.45.191.10'}; const ip=IP[host]; if(!ip) return ERR(`ping: ${host}: Name or service not known`,2);
+   const local=ip==='127.0.0.1'; const n=c||4; const ttl=local?64:ip==='192.168.1.1'?64:117; const base=local?0.04:ip==='192.168.1.1'?1.2:12;
+   let out=`PING ${host} (${ip}) 56(84) bytes of data.\n`; const ts=[]; for(let i=1;i<=n;i++){ const t=+(base+((i*37)%9)/(local?100:10)).toFixed(local?3:1); ts.push(t); out+=`64 bytes from ${local?'localhost':host===ip?ip:host==='google.com'?'eze10s01-in-f14.1e100.net':host} (${ip}): icmp_seq=${i} ttl=${ttl} time=${t} ms\n`; }
+   if(!c) out+='^C\n';
+   const mn=Math.min(...ts), mx=Math.max(...ts), av=ts.reduce((s,x)=>s+x,0)/ts.length;
+   out+=`\n--- ${host} ping statistics ---\n${n} packets transmitted, ${n} received, 0% packet loss, time ${(n-1)*1001}ms\nrtt min/avg/max/mdev = ${mn.toFixed(3)}/${av.toFixed(3)}/${mx.toFixed(3)}/${((mx-mn)/3).toFixed(3)} ms\n`;
+   if(!c) out+='(en la terminal real, ping sin -c sigue para siempre hasta que apretás Ctrl+C; acá cortamos solos a los 4)\n';
+   return OK(out); },
+ ip:(a)=>{ const s=a.join(' '); if(/^(a|addr|address)( show)?$/.test(s)) return OK(`1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000\n    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00\n    inet 127.0.0.1/8 scope host lo\n       valid_lft forever preferred_lft forever\n2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000\n    link/ether 08:00:27:3a:5b:7c brd ff:ff:ff:ff:ff:ff\n    inet 192.168.1.50/24 brd 192.168.1.255 scope global dynamic eth0\n       valid_lft 85912sec preferred_lft 85912sec\n`);
+   if(/^(r|route)( show)?$/.test(s)) return OK('default via 192.168.1.1 dev eth0 proto dhcp src 192.168.1.50 metric 100\n192.168.1.0/24 dev eth0 proto kernel scope link src 192.168.1.50 metric 100\n'); return ERR(`Object "${a[0]||''}" is unknown, try "ip help".`,255); },
+ ss:(a)=>{ const {f}=flagsOf(a); if(!f.has('l')) return OK('Netid State Recv-Q Send-Q   Local Address:Port      Peer Address:Port Process\ntcp   ESTAB 0      0        192.168.1.50:22         190.12.3.4:51544\ntcp   ESTAB 0      0        192.168.1.50:22          181.4.5.6:60211\n');
+   const R=[['udp','UNCONN',0,0,'127.0.0.53%lo:53','0.0.0.0:*'],['tcp','LISTEN',0,4096,'127.0.0.53%lo:53','0.0.0.0:*'],['tcp','LISTEN',0,128,'0.0.0.0:22','0.0.0.0:*'],['tcp','LISTEN',0,80,'127.0.0.1:3306','0.0.0.0:*'],['tcp','LISTEN',0,511,'*:80','*:*'],['tcp','LISTEN',0,128,'[::]:22','[::]:*']].filter(r=>(f.has('t')&&r[0]==='tcp')||(f.has('u')&&r[0]==='udp')||(!f.has('t')&&!f.has('u')));
+   return OK('Netid State  Recv-Q Send-Q  Local Address:Port   Peer Address:Port Process\n'+R.map(r=>`${pad(r[0],5,1)} ${pad(r[1],6,1)} ${pad(r[2],6)} ${pad(r[3],6)} ${pad(r[4],18)} ${pad(r[5],19)}`).join('\n')+'\n'); },
+ netstat:(a)=>{ const {f}=flagsOf(a); const R=[['tcp','0.0.0.0:22','0.0.0.0:*','LISTEN'],['tcp','127.0.0.1:3306','0.0.0.0:*','LISTEN'],['tcp','127.0.0.53:53','0.0.0.0:*','LISTEN'],['tcp6',':::80',':::*','LISTEN'],['tcp6',':::22',':::*','LISTEN'],['udp','127.0.0.53:53','0.0.0.0:*','']].filter(r=>(f.has('t')&&r[0].startsWith('tcp'))||(f.has('u')&&r[0]==='udp'));
+   return OK('Active Internet connections (only servers)\nProto Recv-Q Send-Q Local Address           Foreign Address         State\n'+R.map(r=>`${pad(r[0],5,1)}      0      0 ${pad(r[1],23,1)} ${pad(r[2],23,1)} ${r[3]}`).join('\n')+'\n'); },
+ nslookup:(a)=>{ const h=a[0]; if(!h) return ERR('usage: nslookup host'); if(h==='localhost') return OK('Server:\t\t127.0.0.53\nAddress:\t127.0.0.53#53\n\nName:\tlocalhost\nAddress: 127.0.0.1\n'); return OK(`Server:\t\t127.0.0.53\nAddress:\t127.0.0.53#53\n\nNon-authoritative answer:\nName:\t${h}\nAddress: ${h.includes('google')?'142.251.133.14':'200.45.191.10'}\n`); },
+ dig:(a)=>OK(`;; ANSWER SECTION:\n${a[0]||'google.com'}.\t\t120\tIN\tA\t142.251.133.14\n\n;; SERVER: 127.0.0.53#53(127.0.0.53) (UDP)\n`),
+ traceroute:(a)=>OK(`traceroute to ${a[0]} (142.251.133.14), 30 hops max, 60 byte packets\n 1  _gateway (192.168.1.1)  1.204 ms  1.180 ms  1.161 ms\n 2  10.20.0.1 (10.20.0.1)  6.512 ms  6.498 ms  6.480 ms\n 3  200.51.240.33 (200.51.240.33)  9.904 ms  9.887 ms  9.870 ms\n 4  142.251.133.14 (142.251.133.14)  12.211 ms  12.193 ms  12.176 ms\n`),
+ telnet:(a)=>a[1]==='80'||a[1]==='443'?OK(`Trying 142.251.133.14...\nConnected to ${a[0]}.\nEscape character is '^]'.\nConnection closed by foreign host.\n`):OK(`Trying ${a[0]}...\ntelnet: Unable to connect to remote host: Connection refused\n`),
+ ssh:(a)=>OK(`(Acá ya estás conectado por SSH al servidor. En la realidad, ssh ${a.join(' ')} pediría la contraseña y abriría una sesión cifrada por el puerto 22.)\n`),
+ scp:(a)=>OK(`(scp se ejecuta desde TU PC para traer o llevar archivos: scp ORIGEN DESTINO. Ej.: scp lucas@192.168.1.50:~/entrega.txt C:\\Users\\Lucas\\Desktop\\)\n`),
+ alias:(a)=>{ if(!a.length) return OK(Object.entries(Object.assign({ll:'ls -alF',la:'ls -A',l:'ls -CF'},sh.aliases)).sort().map(([k,v])=>`alias ${k}='${v}'`).join('\n')+'\n'); a.forEach(x=>{ const i=x.indexOf('='); if(i>0) sh.aliases[x.slice(0,i)]=x.slice(i+1); }); return OK(); },
+ unalias:(a)=>{ a.forEach(x=>delete sh.aliases[x]); return OK(); },
+ history:()=>OK(sh.hist.map((h,i)=>pad(i+1,5)+'  '+h).join('\n')+'\n'),
+ clear:()=>({out:'',err:'',code:0,clear:true}),
+ sudo:(a,stdin,ctx)=>{ if(!sh.root) return ERR('[sudo] password for lucas: \nlucas is not in the sudoers file.  This incident will be reported.\n(En el servidor de la facultad no tenés sudo. Activá el "modo administrador" para practicar estos comandos.)'); return exec(a,stdin,ctx); },
+ ufw:(a)=>{ if(!sh.root) return ERR('ERROR: You need to be root to run this script'); const s=a.join(' ');
+   if(s==='enable'){ sh.ufw.on=true; return OK('Command may disrupt existing ssh connections. Proceed with operation (y|n)? y\nFirewall is active and enabled on system startup\n'); }
+   if(s==='disable'){ sh.ufw.on=false; return OK('Firewall stopped and disabled on system startup\n'); }
+   let m=/^(allow|deny|reject) (\S+)$/.exec(s); if(m){ const r={act:m[1].toUpperCase(),to:m[2]==='ssh'?'22/tcp':m[2]==='http'?'80/tcp':m[2]}; sh.ufw.rules.push(r); return OK('Rule added\nRule added (v6)\n'); }
+   m=/^delete (\d+)$/.exec(s); if(m){ const i=+m[1]-1; if(!sh.ufw.rules[i]) return ERR('ERROR: Could not find rule \''+m[1]+'\''); sh.ufw.rules.splice(i,1); return OK('Deleting:\n allow\nProceed with operation (y|n)? y\nRule deleted\n'); }
+   if(s.startsWith('default')) return OK(`Default ${a[2]||'incoming'} policy changed to '${a[1]}'\n(be sure to update your rules accordingly)\n`);
+   if(s==='status'||s==='status numbered'||s==='status verbose'){ if(!sh.ufw.on) return OK('Status: inactive\n'); const num=s==='status numbered'; return OK('Status: active\n\n     To                         Action      From\n     --                         ------      ----\n'+sh.ufw.rules.map((r,i)=>(num?`[${pad(i+1,2)}] `:'')+pad(r.to,27,1)+pad(r.act+(num?' IN':''),12,1)+'Anywhere').join('\n')+'\n'); }
+   return ERR('ERROR: Invalid syntax'); },
+ iptables:(a)=>{ if(!sh.root) return ERR('iptables v1.8.7 (nf_tables): Could not fetch rule set generation id: Permission denied (you must be root)'); if(a.includes('-L')) return OK('Chain INPUT (policy ACCEPT)\ntarget     prot opt source               destination\nACCEPT     tcp  --  anywhere             anywhere             tcp dpt:ssh\n\nChain FORWARD (policy ACCEPT)\ntarget     prot opt source               destination\n\nChain OUTPUT (policy ACCEPT)\ntarget     prot opt source               destination\n'); return OK(); },
+ 'fail2ban-client':(a)=>{ if(!sh.root) return ERR('Permission denied to socket: /var/run/fail2ban/fail2ban.sock, (you must be root)'); const s=a.join(' ');
+   if(s==='status') return OK('Status\n|- Number of jail:\t1\n`- Jail list:\tsshd\n'); if(s==='status sshd') return OK('Status for the jail: sshd\n|- Filter\n|  |- Currently failed:\t2\n|  |- Total failed:\t15\n|  `- File list:\t/var/log/auth.log\n`- Actions\n   |- Currently banned:\t1\n   |- Total banned:\t3\n   `- Banned IP list:\t203.0.113.45\n');
+   if(a[0]==='unban') return OK('1\n'); return ERR('ERROR: invalid command'); },
+ systemctl:(a)=>{ if(!sh.root&&a[0]!=='status') return ERR(`Failed to ${a[0]} ${a[1]}.service: Access denied\nSee system logs and 'systemctl status ${a[1]}.service' for details.`); const svc=a[1]||'';
+   if(a[0]==='status') return OK(`● ${svc}.service - ${svc==='fail2ban'?'Fail2Ban Service':svc}\n     Loaded: loaded (/lib/systemd/system/${svc}.service; enabled; vendor preset: enabled)\n     Active: active (running) since Sat 2026-10-24 12:18:41 -03; 3 days ago\n`);
+   if(a[0]==='enable') return OK(`Synchronizing state of ${svc}.service with SysV service script with /lib/systemd/systemd-sysv-install.\nCreated symlink /etc/systemd/system/multi-user.target.wants/${svc}.service → /lib/systemd/system/${svc}.service.\n`); return OK(); },
+ help:()=>OK('Comandos disponibles en este simulador:\n'+Object.keys(CMDS).filter(k=>k!=='help').sort().join('  ')+'\n\nOperadores: |  >  >>  2>&1  &&  ;   ·   Flechas ↑/↓ = historial\n'),
+ man:(a)=>OK(`(No hay manual en el simulador. Probá ${a[0]||'el comando'} y mirá la explicación de los flags en la sección "Laboratorio de flags".)\n`),
+ nano:(a)=>OK(`(nano es un editor de texto en pantalla completa. Acá no se puede abrir: para escribir en un archivo usá  echo "texto" > ${a[0]||'archivo'}  o  >>  para agregar.)\n`),
+ exit:()=>OK('logout\n(en la realidad se cerraría la sesión SSH)\n'),
+};
+function headTail(a,stdin,cmd){ let n=10; const files=[]; for(let i=0;i<a.length;i++){ const x=a[i]; if(x==='-n') n=+a[++i]; else if(/^-n\d+$/.test(x)) n=+x.slice(2); else if(/^-\d+$/.test(x)) n=+x.slice(1); else if(x==='-f') {} else files.push(x); }
+  if(isNaN(n)) return ERR(`${cmd}: invalid number of lines`);
+  let out='', err=''; const srcs=files.length?files:[null];
+  srcs.forEach((fn,k)=>{ let t; if(fn===null) t=stdin||''; else { const nd=get(fn); if(!nd){err+=`${cmd}: cannot open '${fn}' for reading: No such file or directory\n`;return;} if(nd.t==='d'){err+=`${cmd}: error reading '${fn}': Is a directory\n`;return;} if(!canRead(nd)){err+=`${cmd}: cannot open '${fn}' for reading: Permission denied\n`;return;} t=nd.c; }
+    const L=lines(t); const pick=cmd==='head'?L.slice(0,n):L.slice(Math.max(0,L.length-n)); if(files.length>1) out+=(k?'\n':'')+`==> ${fn} <==\n`; out+=join(pick); });
+  if(a.includes('-f')&&cmd==='tail') out+='(tail -f se queda esperando líneas nuevas hasta Ctrl+C)\n';
+  return {out,err,code:err?1:0}; }
+sh.run=(line)=>{ sh.hist.push(line); const r=run(line); return r; };
+sh.prompt=()=>`${sh.root?'root':USER}@${HOST}:${short(sh.cwd)}${sh.root?'#':'$'}`;
+sh.get=get; sh.norm=norm; sh.HOME=HOME;
+return sh;
+}
+
+</script>
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'})[c]);
+const shuf=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+
+/* ---------- componente terminal ---------- */
+function Terminal(host,sh,opts){
+  opts=opts||{};
+  host.innerHTML=`<div class="term"><div class="bar"><i></i><i></i><i></i><span>lucas@servidor-so — ssh</span></div><div class="scr" tabindex="0" aria-live="polite"></div><div class="cron" hidden><input type="text" aria-label="Línea del crontab" placeholder="*/5 * * * * rsync -avz ~/lab_seguridad/ ~/backups/ >> ~/rsync.log 2>&1"><button class="btn small">Guardar y salir del editor</button></div><div class="in"><label></label><input type="text" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Escribí un comando"></div></div>`;
+  const scr=host.querySelector('.scr'), inp=host.querySelector('.in input'), lab=host.querySelector('.in label'), cron=host.querySelector('.cron'), cin=cron.querySelector('input');
+  const T={sh,scr,inp,hist:[],hi:0};
+  const promptHTML=()=>{const p=sh.prompt(); const i=p.indexOf(':'); return `<span class="p">${esc(p.slice(0,i))}</span>:<span class="w">${esc(p.slice(i+1,-1))}</span>${p.slice(-1)} `;};
+  T.setPrompt=()=>{lab.innerHTML=promptHTML();};
+  T.print=(html)=>{scr.insertAdjacentHTML('beforeend',html); scr.scrollTop=scr.scrollHeight;};
+  T.note=(t)=>T.print(`<span class="note">${esc(t)}</span>\n`);
+  T.clear=()=>{scr.innerHTML='';};
+  T.exec=(line)=>{ const ph=promptHTML(); const r=sh.run(line);
+    if(r.clear){scr.innerHTML=''; T.setPrompt(); opts.onRun&&opts.onRun(line,r); return r;}
+    T.print(ph+`<span class="c">${esc(line)}</span>\n`+esc(r.out)+(r.err?`<span class="e">${esc(r.err)}</span>`:''));
+    T.setPrompt(); opts.onRun&&opts.onRun(line,r); return r; };
+  sh.onCronEdit=()=>{cron.hidden=false; setTimeout(()=>cin.focus(),30);};
+  cron.querySelector('button').onclick=()=>{ const v=cin.value.trim(); cron.hidden=true; if(v){ sh.cron+=v+'\n'; T.print('<span class="note">crontab: installing new crontab</span>\n'); } else T.print('<span class="note">no crontab for lucas - using an empty one\ncrontab: no changes made to crontab</span>\n'); cin.value=''; opts.onCron&&opts.onCron(v); inp.focus(); };
+  cin.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();cron.querySelector('button').click();}});
+  inp.addEventListener('keydown',e=>{
+    if(e.key==='Enter'){ const v=inp.value; inp.value=''; if(v.trim()){T.hist.push(v); T.hi=T.hist.length;} T.exec(v); }
+    else if(e.key==='ArrowUp'){ if(T.hi>0){T.hi--; inp.value=T.hist[T.hi]||''; e.preventDefault();} }
+    else if(e.key==='ArrowDown'){ if(T.hi<T.hist.length){T.hi++; inp.value=T.hist[T.hi]||'';} }
+  });
+  scr.addEventListener('click',()=>inp.focus());
+  T.setPrompt();
+  return T;
+}
+
+/* ---------- normalización de comandos ---------- */
+function norm(s,entrega){
+  s=s.trim().replace(/[‘’“”"'`]/g,'').replace(/\$HOME/g,'~').replace(/\/home\/lucas/g,'~').replace(/\s+/g,' ');
+  if(entrega){ const re=new RegExp('\\s*(>>|&>>)\\s*'+entrega.replace(/\./g,'\\.')+'(\\s*2>&1)?','g'); s=s.replace(re,''); }
+  s=s.replace(/\s*(\||>>|>|&&|;)\s*/g,' $1 ').replace(/\s+/g,' ').trim();
+  const FC=['ls','ss','netstat','rsync','tar','zip','ps','du','df','wc','grep','top','ping','uname','sort'];
+  return s.split(' && ').map(seg=>seg.split(' | ').map(cmd=>{ const t=cmd.split(' '); return t.map(x=>{ if(x.length>1&&x!=='/'&&x.endsWith('/')) x=x.slice(0,-1); if(FC.includes(t[0])&&/^-[a-zA-Z]{2,}$/.test(x)) x='-'+x.slice(1).split('').sort().join(''); return x; }).join(' '); }).join(' | ')).join(' && ');
+}
+
+/* ---------- MISIONES ---------- */
+const MIS=[
+{id:'seg',title:'TP Seguridad en Linux (30 ejercicios)',file:'entrega.txt',steps:[
+ {n:'M1 · Ej. 1',c:'Mostrá la ruta actual, andá a /tmp y volvé a tu home.',cmd:'pwd && cd /tmp && cd ~',acc:['pwd && cd /tmp && cd'],ex:'<code>pwd</code> imprime dónde estás (<code>/home/lucas</code>). <code>&&</code> ejecuta lo siguiente solo si lo anterior salió bien. <code>cd ~</code> te devuelve al home. Fijate que el prompt vuelve a decir <code>~</code>.'},
+ {n:'M1 · Ej. 2',c:'Listá todos los archivos de tu home, incluidos los ocultos.',cmd:'ls -la ~',acc:['ls -la','ls -al ~'],ex:'<b>-l</b> = formato largo · <b>-a</b> = all (muestra los que empiezan con punto, como <code>.bashrc</code>, <code>.profile</code>, y también <code>.</code> y <code>..</code>). La primera columna son los permisos: <code>d</code> = directorio, <code>-</code> = archivo.'},
+ {n:'M1 · Ej. 3',c:'Mostrá los archivos de /var/log con tamaños legibles (KB, MB, GB).',cmd:'ls -lh /var/log',ex:'<b>-h</b> = human readable: en lugar de <code>1258291</code> muestra <code>1.2M</code>. Solo tiene efecto junto con <b>-l</b>.'},
+ {n:'M1 · Ej. 4',c:'Listá /etc ordenado desde el más reciente.',cmd:'ls -lt /etc',ex:'<b>-t</b> = ordena por fecha de modificación, primero el más nuevo. Mirá cómo <code>motd</code> y <code>resolv.conf</code> quedan arriba. Con <b>-r</b> además (<code>-ltr</code>) se invierte.'},
+ {n:'M1 · Ej. 5',c:'Creá la estructura lab_seguridad/modulo1/evidencias en un solo paso.',cmd:'mkdir -p lab_seguridad/modulo1/evidencias',ex:'<b>-p</b> (parents) crea toda la cadena de carpetas. Sin <code>-p</code> daría error porque <code>lab_seguridad</code> no existía. Probá <code>ls -R lab_seguridad</code> o <code>find lab_seguridad</code> para ver la estructura.'},
+ {n:'M1 · Ej. 6',c:'Duplicá la carpeta lab_seguridad con todo su contenido.',cmd:'cp -r lab_seguridad lab_seguridad_backup',acc:['cp -R lab_seguridad lab_seguridad_backup'],ex:'<b>-r</b> = recursivo: copia la carpeta y todo lo de adentro. Sin <code>-r</code> sale <code>cp: -r not specified; omitting directory</code>.'},
+ {n:'M1 · Ej. 7',c:'Creá borrador.txt, renombralo a notas.txt y movelo a lab_seguridad/.',cmd:'touch borrador.txt && mv borrador.txt notas.txt && mv notas.txt lab_seguridad/',ex:'<code>touch</code> crea un archivo vacío. <code>mv a b</code> <b>renombra</b>. <code>mv a carpeta/</code> <b>mueve</b>. El mismo comando hace las dos cosas.'},
+ {n:'M1 · Ej. 8',c:'Consultá el espacio total ocupado por tu directorio personal.',cmd:'du -sh ~',acc:['du -hs ~'],ex:'<code>du</code> = disk usage (lo que ocupa una carpeta). <b>-s</b> = un solo total · <b>-h</b> = legible. No lo confundas con <code>df</code>, que muestra el espacio de los discos.'},
+ {n:'M1 · Ej. 9',c:'Buscá la palabra "root" en /etc/passwd ignorando mayúsculas y minúsculas.',cmd:'grep -i "root" /etc/passwd',ex:'<b>-i</b> = ignore case. Aparece la línea del usuario root: <code>usuario:x:UID:GID:descripción:home:shell</code>.'},
+ {n:'M1 · Ej. 10',c:'Mostrá las líneas de /etc/passwd que NO contienen "/bin/bash".',cmd:'grep -v "/bin/bash" /etc/passwd',ex:'<b>-v</b> = invierte: muestra lo que <b>no</b> coincide. Salen las cuentas de servicio, que usan <code>/usr/sbin/nologin</code> (no pueden iniciar sesión).'},
+ {n:'M2 · Ej. 11',c:'Mostrá la versión e información del kernel.',cmd:'uname -v',ex:'<b>-v</b> = versión (compilación) del kernel. Comparalo con <code>uname</code> (solo "Linux"), <code>uname -r</code> (release) y <code>uname -a</code> (todo).'},
+ {n:'M2 · Ej. 12',c:'Mostrá el uso de espacio en disco en formato humano.',cmd:'df -h',ex:'<code>df</code> = disk free: una línea por <b>sistema de archivos montado</b>. La raíz <code>/</code> está en <code>/dev/sda2</code>. <b>-h</b> = legible.'},
+ {n:'M2 · Ej. 13',c:'Mostrá el estado del espacio solo de la partición raíz (/).',cmd:'df /',ex:'Pasarle una ruta a <code>df</code> muestra solo el FS que la contiene. Sin <code>-h</code>, los números están en bloques de 1K.'},
+ {n:'M2 · Ej. 14',c:'Mostrá la memoria RAM y la page cache.',cmd:'free -h',ex:'<b>buff/cache</b> = la <b>page cache</b> (RAM usada como caché de disco). <b>available</b> = lo que realmente podés usar. <b>Swap</b> = disco usado como memoria.'},
+ {n:'M2 · Ej. 15',c:'Mostrá el tiempo de actividad del servidor.',cmd:'uptime',ex:'Hora · <b>up</b> = tiempo encendido · usuarios · <b>load average</b> = carga promedio de los últimos <b>1, 5 y 15 minutos</b>.'},
+ {n:'M2 · Ej. 16',c:'Listá los usuarios conectados (solo nombres y cantidad).',cmd:'who -q',ex:'<b>-q</b> = quick: los nombres y al final <code># users=N</code>. <code>who</code> solo muestra también la terminal, la hora y la IP.'},
+ {n:'M2 · Ej. 17',c:'Mostrá tu identidad de usuario y tus grupos (UID / GID).',cmd:'id',ex:'<code>uid=1001(lucas)</code> es tu número de usuario; <code>gid</code>, tu grupo principal; <code>groups</code>, todos tus grupos.'},
+ {n:'M3 · Ej. 18',c:'Aislá tu carpeta personal de otros usuarios y verificalo.',cmd:'chmod 700 ~ && ls -ld ~',ex:'700 = <code>rwx------</code>: solo vos entrás, leés y escribís. <b>ls -ld</b> muestra los permisos del directorio en sí (sin <code>-d</code> mostraría lo de adentro).'},
+ {n:'M3 · Ej. 19',c:'Establecé umask 077, creá test_umask.txt y verificá sus permisos.',cmd:'umask 077 && touch test_umask.txt && ls -l test_umask.txt',ex:'La umask <b>quita</b> permisos a lo que se crea: 666 − 077 = <b>600</b> → <code>-rw-------</code>. Desde ahora, todo lo nuevo de esta sesión nace privado.'},
+ {n:'M3 · Ej. 20',c:'Creá secreto.txt con lectura y escritura solo para el dueño, y verificalo.',cmd:'touch secreto.txt && chmod 600 secreto.txt && ls -l secreto.txt',ex:'600 = 6 (r+w) para el dueño, 0 para grupo y otros → <code>-rw-------</code>.'},
+ {n:'M3 · Ej. 21',c:'Creá la carpeta "compartida" con lectura y ejecución para el grupo, y verificala.',cmd:'mkdir compartida && chmod u=rwx,g=rx,o= compartida && ls -ld compartida',ex:'Notación simbólica: u = rwx (7), g = rx (5), o = nada (0) → <b>750</b> → <code>drwxr-x---</code>. <b>=</b> fija exactamente.'},
+ {n:'M3 · Ej. 22',c:'Mostrá solo la cadena de permisos de secreto.txt.',cmd:'stat -c %A secreto.txt',ex:'<code>stat</code> muestra el detalle de un archivo; <b>-c %A</b> elige mostrar solo los permisos en letras. Con <code>%a</code> los da en octal (600).'},
+ {n:'M4 · Ej. 23',c:'Calculá el hash SHA-256 de secreto.txt, guardalo en checksums.sha256 y mostralo.',cmd:'sha256sum secreto.txt > checksums.sha256 && cat checksums.sha256',ex:'El hash son 64 caracteres hexadecimales: la "huella digital" del archivo. Usa <b>&gt;</b> porque checksums.sha256 es un archivo nuevo.'},
+ {n:'M4 · Ej. 24',c:'Verificá la firma, alterá el archivo con "modificado" y volvé a verificar.',cmd:'sha256sum -c checksums.sha256 && echo "modificado" >> secreto.txt && sha256sum -c checksums.sha256',ex:'Primero da <b>OK</b>. Después de agregar una línea, el contenido cambió, así que el hash no coincide: <b>FAILED</b> y una advertencia. Así se detectan alteraciones.'},
+ {n:'M4 · Ej. 25',c:'Localizá en tu home todos los archivos .txt.',cmd:'find ~ -name "*.txt"',ex:'<code>find</code> busca <b>archivos por nombre</b> de forma recursiva. Las comillas hacen que el <code>*</code> lo interprete find. Para buscar <b>texto dentro</b> de un archivo se usa grep.'},
+ {n:'M4 · Ej. 26',c:'Buscá la palabra "modificado" dentro de secreto.txt.',cmd:'grep "modificado" secreto.txt',ex:'Encuentra la línea que agregaste en el ejercicio 24. Los ejercicios están encadenados.'},
+ {n:'M5 · Ej. 27',c:'Sincronizá lab_seguridad/ hacia backups/ excluyendo archivos .tmp (creá backups antes).',cmd:"mkdir -p backups && rsync -avz --exclude '*.tmp' ~/lab_seguridad/ ~/backups/",ex:'<b>-a</b> = modo archivo (recursivo y conserva permisos) · <b>-v</b> = muestra qué copia · <b>-z</b> = comprime la transferencia · <b>--exclude</b> = omite los .tmp. Ejecutalo otra vez: como es <b>incremental</b>, no copia nada nuevo.'},
+ {n:'M5 · Ej. 28',c:'Comprimí la carpeta backups con contraseña y verificalo.',cmd:'zip -e -r backups.zip backups/ && ls -l backups.zip',acc:['zip -er backups.zip backups/ && ls -l backups.zip','zip -r -e backups.zip backups/ && ls -l backups.zip'],ex:'<b>-e</b> = encrypt (pide la contraseña dos veces) · <b>-r</b> = recursivo. <code>tar</code> no cifra; por eso el TP usa zip -e.'},
+ {n:'M5 · Ej. 29',c:'Abrí tu crontab y agregá una tarea que ejecute rsync cada 5 minutos.',cmd:'crontab -e',ex:'Se abre el editor (acá es el cuadro amarillo). Escribí <code>*/5 * * * * rsync -avz ~/lab_seguridad/ ~/backups/ &gt;&gt; ~/rsync.log 2&gt;&amp;1</code> y guardá. Campos: <b>minuto hora día mes día-semana</b>; <code>*/5</code> en minutos = cada 5 minutos.'},
+ {n:'M5 · Ej. 30',c:'Verificá las tareas programadas activas.',cmd:'crontab -l',ex:'<b>-l</b> = lista el crontab. Si en el ejercicio 29 guardaste la línea, aparece acá; si no, dice <code>no crontab for lucas</code>. (Ojo: <b>-r</b> lo borra.)'},
+ {n:'Final',c:'Mirá tu archivo de entrega completo.',cmd:'cat entrega.txt',ex:'Esto es lo que entregarías. Para bajarlo a tu PC: <code>scp tu_usuario@IP:~/entrega.txt ~/Desktop/</code>, o con WinSCP.'},
+]},
+{id:'cmd',title:'TP Comandos básicos (30 ejercicios)',file:'Fernandez_Lucas_TP1.txt',steps:[
+ {n:'Inicio',c:'Creá tu archivo de registro.',cmd:'touch Fernandez_Lucas_TP1.txt',ex:'En el TP se llama Apellido_Nombre_TP1.txt. Con la opción "guardar cada salida" activada, cada ejercicio se agrega solo con su encabezado <code>=== Ejercicio N ===</code>.'},
+ {n:'Ej. 1',c:'Mostrá el uso de espacio en disco de los sistemas de archivos.',cmd:'df',ex:'Sin <code>-h</code>: tamaños en bloques de 1K (<code>1K-blocks</code>).'},
+ {n:'Ej. 2',c:'Consultá qué usuarios están conectados.',cmd:'who',ex:'Usuario · terminal (pts/0) · fecha y hora de entrada · IP desde donde se conectó.'},
+ {n:'Ej. 3',c:'Mostrá el tiempo de actividad y la carga promedio.',cmd:'uptime',ex:'Los 3 números del final son la carga de los últimos 1, 5 y 15 minutos.'},
+ {n:'Ej. 4',c:'Consultá la información general del SO.',cmd:'uname',ex:'Sin opciones solo imprime <code>Linux</code> (el nombre del kernel).'},
+ {n:'Ej. 5',c:'Mostrá la memoria libre y usada.',cmd:'free',ex:'Sin <code>-h</code>, los valores están en KiB.'},
+ {n:'Ej. 6',c:'Mostrá solo los nombres y la cantidad de usuarios conectados.',cmd:'who -q',ex:'q = quick: termina con <code># users=2</code>.'},
+ {n:'Ej. 7',c:'Registrá la versión exacta del kernel.',cmd:'uname -v',ex:'-v = versión/compilación (#101-Ubuntu SMP…).'},
+ {n:'Ej. 8',c:'Mostrá tu UID, GID y grupos.',cmd:'id',ex:'uid=1001(lucas) gid=1001(lucas) groups=…'},
+ {n:'Ej. 9',c:'Mostrá el uso de disco en formato legible.',cmd:'df -h',ex:'-h = K, M, G.'},
+ {n:'Ej. 10',c:'Mostrá solo el sistema de archivos raíz.',cmd:'df /',ex:'Solo la línea de /dev/sda2 montado en /.'},
+ {n:'Ej. 11',c:'Volvé a registrar uptime para ver la variación de la carga.',cmd:'uptime',ex:'Compará los números con los del ejercicio 3: la carga cambia con el tiempo.'},
+ {n:'Ej. 12',c:'Mostrá de nuevo el resumen de memoria.',cmd:'free',ex:'Para observar el consumo actual.'},
+ {n:'Ej. 13',c:'Creá el directorio practica_so.',cmd:'mkdir practica_so',ex:'No imprime nada si sale bien (en Linux, "sin noticias, buenas noticias").'},
+ {n:'Ej. 14',c:'Eliminá el directorio vacío practica_so.',cmd:'rmdir practica_so',ex:'<code>rmdir</code> solo borra carpetas <b>vacías</b>. Si tuviera algo, saldría <code>Directory not empty</code>.'},
+ {n:'Ej. 15',c:'Creá prueba.txt y dale lectura y escritura solo al propietario.',cmd:'touch prueba.txt && chmod 600 prueba.txt',acc:['touch prueba.txt ; chmod 600 prueba.txt'],ex:'600 = rw-------. Verificalo con <code>ls -l prueba.txt</code>.'},
+ {n:'Ej. 16',c:'Mostrá toda la información detallada de /etc/passwd.',cmd:'stat /etc/passwd',ex:'Tamaño, bloques, <b>Inode</b> (lo de sistemas de archivos), Links, <b>Access: (0644/-rw-r--r--)</b>, dueño root y las fechas de acceso, modificación y cambio.'},
+ {n:'Ej. 17',c:'Mostrá solo la cadena de permisos de /etc/passwd.',cmd:'stat -c %A /etc/passwd',ex:'<code>-rw-r--r--</code> = 644: root lee y escribe, el resto solo lee.'},
+ {n:'Ej. 18',c:'Mostrá las primeras líneas por defecto de /etc/passwd.',cmd:'head /etc/passwd',ex:'Por defecto <code>head</code> muestra <b>10</b> líneas (el archivo tiene 13).'},
+ {n:'Ej. 19',c:'Mostrá solo las primeras 5 líneas de /etc/passwd.',cmd:'head -n 5 /etc/passwd',acc:['head -5 /etc/passwd'],ex:'-n 5 = cinco líneas.'},
+ {n:'Ej. 20',c:'Mostrá líneas, palabras y bytes de /etc/passwd.',cmd:'wc /etc/passwd',ex:'Orden fijo: <b>líneas · palabras · bytes</b> · nombre.'},
+ {n:'Ej. 21',c:'Mostrá únicamente la cantidad de líneas de /etc/passwd.',cmd:'wc -l /etc/passwd',ex:'13 líneas = 13 cuentas de usuario.'},
+ {n:'Ej. 22',c:'Pasá "sistemas operativos" a mayúsculas.',cmd:"echo \"sistemas operativos\" | tr 'a-z' 'A-Z'",ex:'El <b>|</b> pasa la salida de echo como entrada de tr, que traduce cada letra de a-z a A-Z.'},
+ {n:'Ej. 23',c:'Tomá las primeras 5 líneas de /etc/passwd y convertí los saltos de línea en espacios.',cmd:"head -n 5 /etc/passwd | tr '\\n' ' '",ex:'Las 5 líneas quedan en una sola. Fijate que el prompt queda pegado al final porque ya no hay salto de línea.'},
+ {n:'Ej. 24',c:'Contá cuántas líneas tiene tu archivo de entrega hasta ahora.',cmd:'wc -l Fernandez_Lucas_TP1.txt',ex:'Si tenés activado "guardar cada salida", el archivo ya tiene todas las salidas anteriores. Si no, da 0.'},
+ {n:'Ej. 25',c:'Creá el alias mi_ls para ls -l.',cmd:"alias mi_ls='ls -l'",ex:'Probá escribir <code>mi_ls</code>. El alias dura solo en esta sesión; para que sea permanente se agrega a <code>~/.bashrc</code>.'},
+ {n:'Ej. 26',c:'Mostrá todos los alias configurados.',cmd:'alias',ex:'Aparece <code>mi_ls</code> junto a los que trae Ubuntu (ll, la, l).'},
+ {n:'Ej. 27',c:'Comprobá la conectividad con la interfaz local (127.0.0.1).',cmd:'ping 127.0.0.1',ex:'127.0.0.1 = <b>loopback</b>, la propia máquina. Sin <code>-c</code>, en Linux ping no para hasta Ctrl+C.'},
+ {n:'Ej. 28',c:'Enviá exactamente 5 paquetes de prueba a 127.0.0.1.',cmd:'ping -c 5 127.0.0.1',ex:'<b>-c 5</b> = count: manda 5 y termina solo. Mirá: <code>5 packets transmitted, 5 received, 0% packet loss</code>.'},
+ {n:'Ej. 29',c:'Mostrá el detalle de tu archivo de entrega con stat.',cmd:'stat Fernandez_Lucas_TP1.txt',ex:'Para comparar con lo que muestra <code>ls -l</code>: stat agrega el inodo, los bloques y las tres fechas.'},
+ {n:'Ej. 30',c:'Registrá el total final de líneas de tu archivo.',cmd:'wc -l Fernandez_Lucas_TP1.txt',ex:'Tiene más líneas que en el ejercicio 24: el archivo siguió creciendo.'},
+ {n:'Final',c:'Verificá que los ejercicios quedaron registrados.',cmd:'cat Fernandez_Lucas_TP1.txt',ex:'Se descarga con <code>scp usuario@ip:~/Apellido_Nombre_TP1.txt C:\\Users\\TuUsuario\\Downloads\\</code>.'},
+]},
+{id:'txt',title:'TP head · tail · cut · sort · wc · du · chmod · ps · top · date',file:'salida-lucas.fernandez.txt',steps:[
+ {n:'Prep. 1',c:'Creá notas.csv con Juan,80 / Ana,90 / Luis,75 / Zoe,95 (una por línea).',cmd:'echo -e "Juan,80\\nAna,90\\nLuis,75\\nZoe,95" > notas.csv',ex:'<b>-e</b> hace que <code>\\n</code> sea un salto de línea. <b>&gt;</b> crea (o pisa) el archivo. Miralo con <code>cat notas.csv</code>.'},
+ {n:'Prep. 2',c:'Creá palabras.txt con perro, casa, zorro, avion, barco.',cmd:'echo -e "perro\\ncasa\\nzorro\\navion\\nbarco" > palabras.txt',ex:'Mismo truco: 5 líneas.'},
+ {n:'11.1',c:'Mostrá las primeras 3 líneas de palabras.txt.',cmd:'head -n 3 palabras.txt',acc:['head -3 palabras.txt'],ex:'perro, casa, zorro.'},
+ {n:'11.2',c:'Mostrá solo la primera línea de palabras.txt.',cmd:'head -n 1 palabras.txt',acc:['head -1 palabras.txt'],ex:'perro.'},
+ {n:'11.3',c:'Mostrá las primeras 10 líneas de notas.csv.',cmd:'head -n 10 notas.csv',acc:['head notas.csv','head -10 notas.csv'],ex:'Tiene solo 4 líneas: muestra las 4, sin error.'},
+ {n:'12.1',c:'Mostrá las últimas 2 líneas de palabras.txt.',cmd:'tail -n 2 palabras.txt',acc:['tail -2 palabras.txt'],ex:'avion, barco.'},
+ {n:'12.2',c:'Mostrá las últimas 5 líneas de notas.csv.',cmd:'tail -n 5 notas.csv',acc:['tail -5 notas.csv'],ex:'Las 4 que tiene.'},
+ {n:'12.3',c:'Mostrá la última línea de palabras.txt.',cmd:'tail -n 1 palabras.txt',acc:['tail -1 palabras.txt'],ex:'barco.'},
+ {n:'13.1',c:'Extraé la primera columna de notas.csv.',cmd:"cut -d',' -f1 notas.csv",acc:['cut -d, -f1 notas.csv','cut -f1 -d, notas.csv'],ex:'<b>-d</b> = delimitador (la coma) · <b>-f1</b> = campo 1 → los nombres.'},
+ {n:'13.2',c:'Mostrá solo los primeros 3 caracteres de cada línea de palabras.txt.',cmd:'cut -c1-3 palabras.txt',acc:['cut -c 1-3 palabras.txt'],ex:'<b>-c</b> = caracteres: per, cas, zor, avi, bar.'},
+ {n:'13.3',c:'Mostrá los puntajes (segunda columna) de notas.csv.',cmd:"cut -d',' -f2 notas.csv",acc:['cut -d, -f2 notas.csv'],ex:'80, 90, 75, 95.'},
+ {n:'14.1',c:'Ordená palabras.txt alfabéticamente.',cmd:'sort palabras.txt',ex:'avion, barco, casa, perro, zorro.'},
+ {n:'14.2',c:'Ordená palabras.txt en orden inverso.',cmd:'sort -r palabras.txt',ex:'<b>-r</b> = reverse.'},
+ {n:'14.3',c:'Ordená notas.csv por puntaje de forma numérica.',cmd:"sort -t',' -k2 -n notas.csv",acc:['sort -t, -k2 -n notas.csv',"sort -t',' -nk2 notas.csv",'sort -t, -nk2 notas.csv',"sort -n -t',' -k2 notas.csv",'sort -k2 -n -t, notas.csv'],ex:'<b>-t</b> = separador (en sort es -t, en cut es -d) · <b>-k2</b> = columna 2 · <b>-n</b> = numérico. Luis 75 → Zoe 95.'},
+ {n:'15.1',c:'Contá las líneas de palabras.txt.',cmd:'wc -l palabras.txt',ex:'5.'},
+ {n:'15.2',c:'Contá las palabras de palabras.txt.',cmd:'wc -w palabras.txt',ex:'5 (una por línea).'},
+ {n:'15.3',c:'Contá los caracteres de notas.csv.',cmd:'wc -c notas.csv',acc:['wc -m notas.csv'],ex:'30 bytes: 8+7+8+7, contando cada salto de línea.'},
+ {n:'16.1',c:'Mostrá el uso de disco de palabras.txt.',cmd:'du -h palabras.txt',acc:['du palabras.txt'],ex:'<b>4.0K</b> aunque pese 29 bytes: el disco asigna bloques enteros de 4 KB.'},
+ {n:'16.2',c:'Mostrá el uso de disco del directorio actual.',cmd:'du -h .',acc:['du .','du -h'],ex:'Muestra cada subcarpeta y al final el directorio actual.'},
+ {n:'16.3',c:'Mostrá el total del uso de disco.',cmd:'du -sh .',acc:['du -ch','du -sh','du -s .','du -ch .','du -hs .'],ex:'<b>-s</b> = un solo total (o <b>-c</b> agrega una línea "total").'},
+ {n:'17.1',c:'Dejá notas.csv en solo lectura para el usuario.',cmd:'chmod 400 notas.csv',acc:['chmod u=r notas.csv','chmod u=r,go= notas.csv','chmod 444 notas.csv','chmod a-w notas.csv','chmod u-w notas.csv'],ex:'400 = <code>-r--------</code>. Probá <code>echo x &gt;&gt; notas.csv</code>: da <b>Permission denied</b>.'},
+ {n:'17.2',c:'Hacelo ejecutable.',cmd:'chmod u+x notas.csv',acc:['chmod +x notas.csv','chmod 500 notas.csv','chmod 700 notas.csv'],ex:'<b>u+x</b> = le agrega ejecución al dueño.'},
+ {n:'17.3',c:'Quitale los permisos de escritura a grupo y otros.',cmd:'chmod go-w notas.csv',acc:['chmod g-w,o-w notas.csv'],ex:'<b>go-w</b>: g = grupo, o = otros, - = quitar, w = escritura.'},
+ {n:'18.1',c:'Mostrá los procesos del usuario actual.',cmd:'ps -u $USER',acc:['ps -u lucas','ps u','ps ux','ps'],ex:'PID = identificador de cada proceso.'},
+ {n:'18.2',c:'Mostrá todos los procesos.',cmd:'ps aux',acc:['ps -e','ps -ef','ps -A','ps ax'],ex:'Columnas: USER, PID, %CPU, %MEM, <b>STAT</b> (S = sleeping/bloqueado, R = running, s = líder de sesión, + = en primer plano)… El PID 1 es init/systemd.'},
+ {n:'18.3',c:'Buscá un proceso (bash) usando grep.',cmd:'ps aux | grep bash',acc:['ps -ef | grep bash','ps -e | grep bash'],ex:'Fijate que aparece también la línea del propio <code>grep bash</code>.'},
+ {n:'19.1',c:'Mostrá los primeros 10 procesos activos con top en modo batch.',cmd:'top -b -n1 | head -n 17',acc:['top -b -n1','top -b -n 1','top -b -n1 | head -17','top -b -n 1 | head -n 17'],ex:'<b>-b</b> = batch (no interactivo) · <b>-n1</b> = una sola vuelta. Las 7 primeras líneas son el encabezado: uptime, tareas, CPU y memoria.'},
+ {n:'19.2',c:'Mostrá los procesos ordenados por memoria.',cmd:'top -b -n1 -o %MEM',acc:['top -b -n 1 -o %MEM'],ex:'En top interactivo es <b>Shift+M</b>. En batch se usa <code>-o %MEM</code>.'},
+ {n:'19.3',c:'Guardá una ejecución de top en un archivo de texto.',cmd:'top -b -n1 > top.txt',acc:['top -b -n 1 > top.txt','top -b -n1 >> top.txt'],ex:'No muestra nada porque la salida fue a top.txt. Miralo con <code>head top.txt</code>.'},
+ {n:'20.1',c:'Mostrá la fecha y hora actual.',cmd:'date',ex:'Día, mes, número, hora, zona (-03) y año.'},
+ {n:'20.2',c:'Mostrá solo el año.',cmd:'date +%Y',ex:'<b>%Y</b> = año de 4 dígitos. %m mes · %d día · %H hora · %M minuto.'},
+ {n:'20.3',c:'Mostrá la fecha en formato largo (con el nombre del día y del mes).',cmd:'date "+%A %d %B %Y"',check:s=>/^date \+.*%A/.test(s),ex:'<b>%A</b> = día de la semana · <b>%B</b> = mes en letras. El idioma depende del sistema (en el servidor, inglés).'},
+]},
+];
+
+/* ---------- vista guiada ---------- */
+let G=null;
+function gstart(id){
+  const m=MIS.find(x=>x.id===id); G={m,i:0,done:new Set(),sh:makeShell(),last:null};
+  $('mtitle').textContent=m.title;
+  G.term=Terminal($('gterm'),G.sh,{onRun:gonrun});
+  G.term.note(`Conectado al servidor como lucas (sin sudo). Archivo de entrega: ${m.file}. Escribí el comando del ejercicio y apretá Enter.`);
+  grender();
+}
+function gonrun(line,r){
+  const st=G.m.steps[G.i]; if(!st) return;
+  const n=norm(line,G.m.file), ok=st.check?st.check(n):[st.cmd].concat(st.acc||[]).some(x=>norm(x,G.m.file)===n);
+  if(ok){
+    if($('auto').checked&&st.n!=='Final'&&st.n!=='Inicio'&&!line.includes(G.m.file)){ if(!G.sh.get(G.m.file)) G.sh.run(`touch ${G.m.file}`); const node=G.sh.get(G.m.file); node.c+=`=== ${st.n} ===\n`+r.out+(r.err||''); }
+    G.done.add(G.i); G.last={ok:true,st}; G.i++; while(G.done.has(G.i)) G.i++;
+  } else G.last={ok:false,st,line};
+  grender();
+}
+function grender(){
+  const m=G.m, st=m.steps[G.i];
+  $('mprog').textContent=`${G.done.size} de ${m.steps.length}`; $('mbar').style.width=Math.round(G.done.size*100/m.steps.length)+'%';
+  $('msteps').innerHTML=m.steps.map((s,k)=>`<button class="step ${k===G.i?'cur':''} ${G.done.has(k)?'done':''}" data-k="${k}"><b>${G.done.has(k)?'✓':esc(s.n.split('·').pop().trim())}</b><span>${esc(s.c)}</span></button>`).join('');
+  $('msteps').querySelectorAll('.step').forEach(b=>b.onclick=()=>{G.i=+b.dataset.k; G.last=null; grender();});
+  const cur=$('msteps').querySelector('.cur'); if(cur) cur.scrollIntoView({block:'nearest'});
+  if(st){ $('task').innerHTML=`<span class="n">${esc(st.n)}</span><p>${esc(st.c)}</p><div class="row"><button class="btn small ghost" id="g-show">Ver el comando</button><button class="btn small ghost" id="g-type">Escribirlo por mí</button><button class="btn small ghost" id="g-skip">Saltar</button></div><div id="g-hint"></div>`;
+    $('g-show').onclick=()=>{$('g-hint').innerHTML=`<code>${esc(st.cmd)}</code>`;};
+    $('g-type').onclick=()=>{G.term.inp.value=st.cmd; G.term.inp.focus();};
+    $('g-skip').onclick=()=>{G.i++; G.last=null; grender();};
+  } else $('task').innerHTML=`<span class="n">TP terminado</span><p>¡Hiciste los ${m.steps.length} pasos! Podés seguir usando la terminal o elegir otro TP.</p>`;
+  const L=G.last;
+  $('gexpl').innerHTML=L?(L.ok?`<div class="expl ok"><b class="t">✓ ${esc(L.st.n)} correcto</b><span>${L.st.ex}</span></div>`:`<div class="expl no"><b class="t">Eso no es lo que pide ${esc(L.st.n)}</b><span>Igual se ejecutó: mirá qué salió. Pista: tocá <b>Ver el comando</b> y compará con lo que escribiste.</span></div>`):'';
+  setTimeout(()=>G.term.inp.focus({preventScroll:true}),20);
+}
+$('msel').innerHTML=MIS.map(m=>`<option value="${m.id}">${esc(m.title)}</option>`).join('');
+$('msel').onchange=()=>gstart($('msel').value);
+$('mreset').onclick=()=>gstart($('msel').value);
+
+/* ---------- laboratorio de flags ---------- */
+const FL=[
+ {c:'ls',t:['~','/etc','/var/log','lab_seguridad'],f:[['-l','formato largo: tipo y permisos, enlaces, dueño, grupo, tamaño, fecha, nombre'],['-a','all: incluye los ocultos (.bashrc) y . ..'],['-h','tamaños legibles: 4.0K, 1.2M (con -l)'],['-t','ordena por fecha de modificación, más nuevo primero'],['-r','invierte el orden'],['-S','ordena por tamaño, más grande primero'],['-d','el directorio en sí, no su contenido']],on:['-l']},
+ {c:'grep',pat:'bash',t:['/etc/passwd','palabras.txt','notas.csv'],f:[['-i','ignora mayúsculas y minúsculas'],['-v','invierte: las líneas que NO coinciden'],['-c','solo cuenta cuántas líneas coinciden'],['-n','agrega el número de línea'],['-w','solo la palabra completa']]},
+ {c:'head',num:true,t:['/etc/passwd','palabras.txt','notas.csv'],f:[],note:'Sin número muestra 10 líneas. Con -n N, las primeras N.'},
+ {c:'tail',num:true,t:['/etc/passwd','palabras.txt','notas.csv'],f:[],note:'Sin número muestra las últimas 10. Con -n N, las últimas N.'},
+ {c:'wc',t:['palabras.txt','notas.csv','/etc/passwd'],f:[['-l','líneas'],['-w','palabras'],['-c','bytes']],note:'Sin flags: líneas, palabras y bytes, en ese orden.'},
+ {c:'sort',t:['notas.csv','palabras.txt'],f:[['-r','inverso'],['-n','numérico (9 antes que 10)'],["-t',' -k2",'separador coma, ordenar por la columna 2'],['-u','elimina repetidos']]},
+ {c:'cut',t:['notas.csv','palabras.txt'],radio:[["-d',' -f1",'columna 1 (separador coma)'],["-d',' -f2",'columna 2 (separador coma)'],['-c1-3','caracteres 1 a 3 de cada línea'],['-c1','solo el primer carácter']]},
+ {c:'du',t:['~','palabras.txt','lab_seguridad','*'],f:[['-s','un solo total por argumento'],['-h','legible'],['-c','agrega una línea "total"']],on:['-h']},
+ {c:'df',t:['','/','/boot/efi'],f:[['-h','legible (G, M)'],['-T','agrega el tipo de FS (ext4, tmpfs, vfat)']]},
+ {c:'free',t:[''],f:[['-h','legible (Gi, Mi)']]},
+ {c:'who',t:[''],f:[['-q','solo nombres y cantidad']]},
+ {c:'uname',t:[''],f:[['-s','nombre del kernel'],['-n','nombre del equipo'],['-r','release del kernel'],['-v','versión (compilación)'],['-m','arquitectura'],['-a','todo']]},
+ {c:'chmod',t:['secreto.txt','notas.csv','lab_seguridad'],radio:[['600','rw------- (privado)'],['644','rw-r--r-- (normal)'],['700','rwx------'],['755','rwxr-xr-x'],['750','rwxr-x---'],['400','r-------- (solo lectura)'],['u+x','+x al dueño'],['go-r','quita lectura a grupo y otros'],['u=rwx,g=rx,o=','fija 750']],after:'ls -ld'},
+ {c:'stat',t:['secreto.txt','/etc/passwd','notas.csv'],radio:[['','todo el detalle (inodo, bloques, fechas)'],['-c %A','solo permisos en letras'],['-c %a','solo permisos en octal'],['-c %s','solo el tamaño en bytes']]},
+ {c:'ps',t:[''],radio:[['','solo los de tu terminal'],['aux','todos, con usuario, %CPU y %MEM'],['-u lucas','los de un usuario'],['-ef','todos (otro formato)']]},
+ {c:'ping',t:['127.0.0.1','google.com','192.168.1.1'],radio:[['-c 4','4 paquetes'],['-c 1','1 paquete'],['','sin -c (hasta Ctrl+C)']]},
+ {c:'ss',t:[''],f:[['-t','TCP'],['-u','UDP'],['-l','solo los que están en escucha (LISTEN)'],['-n','números, sin resolver nombres']],on:['-t','-u','-l','-n']},
+ {c:'date',t:[''],radio:[['','fecha y hora completas'],['+%Y','solo el año'],['+%d/%m/%Y','día/mes/año'],['+%H:%M','hora:minuto'],['"+%A %d %B %Y"','formato largo']]},
+ {c:'sha256sum',t:['secreto.txt','notas.csv','palabras.txt'],f:[],note:'Calcula el hash. Cambiá de archivo y mirá cómo cambia por completo. Si modificás un archivo (en la terminal libre), su hash cambia.'},
+];
+const FSH=makeShell({samples:true});
+let FS={c:'ls'}, FSTATE={};
+function frender(){
+  $('fcmds').innerHTML=FL.map(x=>`<button class="tab" data-c="${x.c}" aria-pressed="${x.c===FS.c}">${x.c}</button>`).join('');
+  $('fcmds').querySelectorAll('.tab').forEach(b=>b.onclick=()=>{FS={c:b.dataset.c};frender();});
+  const C=FL.find(x=>x.c===FS.c); const st=FSTATE[C.c]=FSTATE[C.c]||{on:new Set(C.on||[]),t:C.t[0],r:C.radio?C.radio[0][0]:null,n:'',pat:C.pat||''};
+  let h='';
+  if(C.f&&C.f.length) h+=`<div class="stack" style="gap:6px">${C.f.map(([fl,d],i)=>`<label class="chk ${st.on.has(fl)?'on':''}" for="fl${i}"><input type="checkbox" id="fl${i}" data-f="${esc(fl)}" ${st.on.has(fl)?'checked':''}><span><code>${esc(fl)}</code> · ${esc(d)}</span></label>`).join('')}</div>`;
+  if(C.radio) h+=`<div class="stack" style="gap:6px">${C.radio.map(([v,d],i)=>`<label class="chk ${st.r===v?'on':''}" for="fr${i}"><input type="radio" name="fr" id="fr${i}" data-r="${esc(v)}" ${st.r===v?'checked':''}><span><code>${esc(v||'(sin opción)')}</code> · ${esc(d)}</span></label>`).join('')}</div>`;
+  if(C.num) h+=`<label class="chk" for="fnum"><span>Cantidad de líneas (-n): <input type="number" id="fnum" min="1" max="20" value="${st.n}" placeholder="10" style="width:80px"></span></label>`;
+  if(C.pat!==undefined) h+=`<label class="chk" for="fpat"><span>Patrón a buscar: <input type="text" id="fpat" value="${esc(st.pat)}" style="width:120px"></span></label>`;
+  if(C.t.length>1||C.t[0]) h+=`<label class="chk" for="ftar"><span>${C.c==='ping'?'Destino':'Sobre'}: <select id="ftar">${C.t.map(t=>`<option ${t===st.t?'selected':''}>${esc(t||'(nada)')}</option>`).join('')}</select></span></label>`;
+  if(C.note) h+=`<p class="lead" style="font-size:14px">${C.note}</p>`;
+  $('fopts').innerHTML=h;
+  $('fopts').querySelectorAll('[data-f]').forEach(i=>i.onchange=()=>{ i.checked?st.on.add(i.dataset.f):st.on.delete(i.dataset.f); frender(); });
+  $('fopts').querySelectorAll('[data-r]').forEach(i=>i.onchange=()=>{ st.r=i.dataset.r; frender(); });
+  if($('fnum')) $('fnum').oninput=e=>{ st.n=e.target.value; frun(C,st); };
+  if($('fpat')) $('fpat').oninput=e=>{ st.pat=e.target.value; frun(C,st); };
+  if($('ftar')) $('ftar').onchange=e=>{ st.t=e.target.value==='(nada)'?'':e.target.value; frun(C,st); };
+  frun(C,st);
+}
+function frun(C,st){
+  const single=[...st.on].filter(x=>/^-[a-zA-Z]$/.test(x)), multi=[...st.on].filter(x=>!/^-[a-zA-Z]$/.test(x));
+  const parts=[C.c]; if(single.length) parts.push('-'+single.map(x=>x[1]).join('')); parts.push(...multi);
+  if(C.radio&&st.r) parts.push(st.r); if(C.num&&st.n) parts.push('-n '+st.n); if(C.pat!==undefined&&st.pat) parts.push('"'+st.pat+'"'); if(st.t) parts.push(st.t);
+  const cmd=parts.join(' ');
+  const r=FSH.run(cmd); let out=r.out+(r.err?r.err:'');
+  if(C.after&&!r.err){ const r2=FSH.run(`${C.after} ${st.t}`); out=`$ ${C.after} ${st.t}\n`+r2.out; FSH.run(`chmod ${C.c==='chmod'&&st.t==='lab_seguridad'?'775':st.t==='secreto.txt'?'600':'664'} ${st.t}`); }
+  $('fbuilt').innerHTML=`<span class="p">lucas@servidor-so:~$</span> ${esc(cmd)}`;
+  $('fout').innerHTML=esc(out)||'<span style="color:var(--term-dim)">(sin salida: en Linux, si sale bien y no hay nada que mostrar, no imprime nada)</span>';
+  const act=(C.f||[]).filter(([f])=>st.on.has(f)).concat(C.radio?C.radio.filter(([v])=>v===st.r):[]);
+  $('fexpl').innerHTML=`<h3>Qué estás viendo</h3>`+(act.length?`<ul style="margin:0;padding-left:20px">${act.map(([f,d])=>`<li><code>${esc(f||C.c)}</code>: ${esc(d)}</li>`).join('')}</ul>`:`<p class="lead" style="font-size:14px">Sin opciones: el comportamiento por defecto de <code>${C.c}</code>.${C.note?' '+C.note:''}</p>`);
+}
+
+/* ---------- terminal libre ---------- */
+let LT;
+function lstart(){ const sh=makeShell({samples:true,root:$('rootm').checked}); LT=Terminal($('lterm'),sh); LT.note('Terminal libre. Probá cualquier comando de los TPs. Escribí help para ver la lista.'+(sh.root?' Modo administrador: podés usar sudo.':'')); }
+const QUICK=['ls -la','cat notas.csv','sort -t, -k2 -n notas.csv','grep -c a palabras.txt','wc palabras.txt','ls -l secreto.txt','umask','chmod 640 notas.csv && ls -l notas.csv','find ~ -name "*.txt"','du -sh ~','ps aux | grep bash','ss -tuln','ip route show','cat /etc/resolv.conf','hostname -I','sudo ufw status','crontab -l'];
+$('lquick').innerHTML='<span class="lead" style="font-size:13px">Probá:</span>'+QUICK.map((q,i)=>`<button class="btn small ghost" data-q="${i}">${esc(q)}</button>`).join('');
+$('lquick').querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>{ LT.exec(QUICK[+b.dataset.q]); });
+$('rootm').onchange=lstart; $('lreset').onclick=lstart;
+
+/* ---------- multiple choice ---------- */
+const MC=[
+ ['¿Qué hace ls -la ~?','Lista todo el home, incluidos los ocultos, en formato largo',['Lista solo las carpetas','Borra los ocultos','Muestra el tamaño total del home']],
+ ['¿Qué agrega -h en ls -lh /var/log?','Tamaños legibles (K, M, G)',['Muestra la ayuda','Oculta los logs','Ordena por hora']],
+ ['ls -lt /etc ordena…','Por fecha de modificación, el más reciente primero',['Alfabéticamente','Por tamaño','Por tipo']],
+ ['mkdir -p lab_seguridad/modulo1/evidencias…','Crea toda la estructura en un solo paso',['Da error porque lab_seguridad no existe','Crea solo evidencias','Crea un archivo']],
+ ['¿Qué pasa con cp lab_seguridad copia si lab_seguridad es una carpeta?','Da error: hace falta -r',['La copia igual','La mueve','La comprime']],
+ ['¿Qué hace mv borrador.txt notas.txt?','Renombra el archivo',['Lo copia','Lo borra','Crea un enlace']],
+ ['¿Qué muestra du -sh ~?','El espacio total que ocupa tu home',['El espacio libre del disco','La RAM','Los usuarios conectados']],
+ ['grep -v "/bin/bash" /etc/passwd muestra…','Las líneas que NO contienen /bin/bash',['Las que sí lo contienen','La versión de bash','Cuántas líneas hay']],
+ ['¿Qué muestra uname -v?','La versión (compilación) del kernel',['La versión de Ubuntu','El usuario','El uptime']],
+ ['¿Qué columna de free -h corresponde a la page cache?','buff/cache',['shared','Swap','total']],
+ ['En "load average: 0.15, 0.20, 0.18", los tres números son…','La carga promedio de 1, 5 y 15 minutos',['El % de CPU de 3 núcleos','La RAM usada','La temperatura']],
+ ['¿Cómo termina la salida de who -q?','# users=2',['La IP de cada usuario','La hora','Nada especial']],
+ ['Después de chmod 700 ~, ¿qué muestra ls -ld ~?','drwx------',['drwxr-xr-x','-rw-------','drwxrwxrwx']],
+ ['umask 077 && touch test_umask.txt. ¿Qué permisos tiene?','-rw------- (600)',['-rwxrwxrwx','-rw-r--r--','----rwxrwx']],
+ ['chmod u=rwx,g=rx,o= compartida equivale a…','750 (drwxr-x---)',['755','700','570']],
+ ['¿Qué devuelve stat -c %A secreto.txt después de chmod 600?','-rw-------',['600','rw','El inodo']],
+ ['¿Qué devuelve la segunda verificación de sha256sum -c en el Ej. 24?','secreto.txt: FAILED',['secreto.txt: OK','Permission denied','Nada']],
+ ['find ~ -name "*.txt" busca…','Archivos terminados en .txt dentro del home, de forma recursiva',['La palabra txt dentro de los archivos','Solo en la carpeta actual','Archivos ocultos']],
+ ['En rsync -avz --exclude "*.tmp", ¿qué hace --exclude?','No copia los archivos .tmp',['Borra los .tmp','Copia solo los .tmp','Comprime los .tmp']],
+ ['¿Qué hace la -e en zip -e -r backups.zip backups/?','Protege el zip con contraseña',['Extrae el zip','Excluye archivos','Elimina la carpeta']],
+ ['*/5 * * * * en cron significa…','Cada 5 minutos',['Cada 5 horas','El día 5','A las 5:00']],
+ ['¿Qué hace crontab -l?','Lista las tareas programadas',['Las borra','Abre el editor','Muestra el log']],
+ ['¿Qué muestra df sin -h?','Los tamaños en bloques de 1K',['Los tamaños en GB','Solo la raíz','La RAM']],
+ ['¿Qué pasa si hacés rmdir practica_so y la carpeta tiene un archivo?','Error: Directory not empty',['La borra igual','Borra solo el archivo','Pide confirmación']],
+ ['head /etc/passwd, sin opciones, muestra…','Las primeras 10 líneas',['Las primeras 5','Todo el archivo','La primera línea']],
+ ['En "wc /etc/passwd", ¿en qué orden salen los números?','Líneas, palabras, bytes',['Bytes, palabras, líneas','Palabras, líneas, bytes','Solo líneas']],
+ ["¿Qué devuelve echo \"sistemas operativos\" | tr 'a-z' 'A-Z'?",'SISTEMAS OPERATIVOS',['sistemas operativos','Sistemas Operativos','Error']],
+ ["¿Qué hace head -n 5 /etc/passwd | tr '\\n' ' '?",'Pone las 5 líneas en una sola, separadas por espacios',['Borra 5 líneas','Cuenta 5 líneas','Ordena 5 líneas']],
+ ["Creás alias mi_ls='ls -l'. ¿Cuánto dura?",'Solo la sesión actual (para que sea permanente va en ~/.bashrc)',['Para siempre','Hasta reiniciar el servidor','Un minuto']],
+ ['ping 127.0.0.1 sin -c en Linux…','Sigue hasta que apretás Ctrl+C',['Manda 4 paquetes','Manda 1','Da error']],
+ ['¿Qué hace ping -c 5 127.0.0.1?','Manda exactamente 5 paquetes a la loopback y termina',['Manda paquetes de 5 bytes','Hace ping a 5 equipos','Espera 5 segundos']],
+ ['¿Qué muestra du -h palabras.txt (29 bytes)?','4.0K, porque el disco asigna bloques de 4 KB',['29','0','29B']],
+ ["sort -t',' -k2 -n notas.csv ordena…",'Numéricamente por la segunda columna separada por comas',['Alfabéticamente por nombre','Al revés','Por largo de línea']],
+ ["cut -d',' -f1 notas.csv devuelve…",'Juan, Ana, Luis, Zoe',['80, 90, 75, 95','Juan,80','J, A, L, Z']],
+ ['¿Cómo guardás una "foto" de top en un archivo?','top -b -n1 > top.txt',['top > top.txt','save top','top -s top.txt']],
+ ['¿Qué muestra date +%Y?','Solo el año',['La fecha completa','El mes','La hora']],
+ ['¿Qué muestra ps aux | grep bash además de los bash?','La línea del propio comando grep',['Nada más','Los procesos de root','Un error']],
+ ['(Misión 6) ¿Qué relación hay entre UFW e iptables?','UFW es una capa simple sobre iptables; sus reglas se traducen a iptables',['UFW reemplaza a iptables','No tienen relación','iptables es una interfaz de UFW']],
+ ['(Misión 6) El SSH entrante al puerto 22 se evalúa en la cadena…','INPUT',['OUTPUT','FORWARD','POSTROUTING']],
+ ['(Misión 6) ¿Diferencia entre DROP y REJECT?','DROP descarta en silencio; REJECT descarta y avisa al emisor',['Son iguales','REJECT acepta','DROP avisa']],
+ ['(Misión 6) En Fail2ban, maxretry, findtime y bantime son…','Los intentos permitidos, la ventana de conteo y la duración del bloqueo',['Puerto, IP y usuario','CPU, RAM y disco','Minutos, horas y días']],
+ ['(Misión 6) ¿Por qué rsync + cron es una buena estrategia de backup?','rsync es incremental y conserva atributos, y cron lo automatiza',['Porque cifran con AES','Porque borran los originales','Porque necesitan sudo']],
+ ['Sin sudo en el servidor, ¿qué pasa al ejecutar ufw status?','ERROR: You need to be root to run this script',['Muestra las reglas','Activa el firewall','Nada']],
+ ['¿Qué comando muestra la IP local?','hostname -I',['ip route show','nslookup localhost','ss -tuln']],
+ ['/etc/resolv.conf contiene…','Los servidores DNS (nameserver)',['Las rutas','Las interfaces','Los usuarios']],
+ ['¿Qué muestra ss -tuln?','Los puertos TCP y UDP en escucha, en formato numérico',['Los usuarios conectados','Los paquetes perdidos','La MAC']],
+];
+let MS=null;
+function mcnew(){ MS={q:shuf(MC).slice(0,20),i:0,ok:0,errs:[]}; mcrender(); }
+function mcrender(){
+  const box=$('mcbox');
+  $('mchud').innerHTML=`<span>Pregunta <b>${Math.min(MS.i+1,MS.q.length)}</b> de ${MS.q.length}</span><span>Correctas <b>${MS.ok}</b></span>`;
+  if(MS.i>=MS.q.length){ const nota=Math.max(1,Math.round(MS.ok/MS.q.length*100)/10);
+    box.innerHTML=`<div class="q"><span class="eyebrow">Resultado</span><span class="big">${nota.toFixed(1).replace('.',',')}</span><p>${MS.ok} de ${MS.q.length} correctas.</p>${MS.errs.length?`<h3>Repasá</h3><ul style="margin:0;padding-left:20px">${MS.errs.map(([q,a])=>`<li>${esc(q)} → <b>${esc(a)}</b></li>`).join('')}</ul>`:'<p>¡Perfecto!</p>'}<div class="row"><button class="btn" id="mc-again">Otra ronda</button></div></div>`; $('mc-again').onclick=mcnew; return; }
+  const [q,a,w]=MS.q[MS.i]; const opts=shuf([a,...w]);
+  box.innerHTML=`<div class="q"><div class="prompt"></div><div class="opts">${opts.map((o,k)=>`<button class="opt" data-k="${k}"><span class="k">${'ABCD'[k]}</span><span class="t"></span></button>`).join('')}</div><div id="mcfb"></div></div>`;
+  box.querySelector('.prompt').textContent=q; box.querySelectorAll('.opt .t').forEach((t,k)=>t.textContent=opts[k]);
+  box.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{ const o=opts[+b.dataset.k], ok=o===a; box.querySelectorAll('.opt').forEach(x=>{x.disabled=true; if(opts[+x.dataset.k]===a) x.classList.add('ok');}); if(!ok){b.classList.add('no'); MS.errs.push([q,a]);} else MS.ok++;
+    $('mcfb').innerHTML=`<div class="row"><button class="btn" id="mc-next">${MS.i+1<MS.q.length?'Siguiente →':'Ver resultado →'}</button><span class="lead" style="font-size:14px">${ok?'¡Bien!':'La correcta está en verde.'}</span></div>`; $('mc-next').onclick=()=>{MS.i++;mcrender();}; $('mc-next').focus(); });
+}
+$('mcnew').onclick=mcnew;
+
+/* ---------- pestañas ---------- */
+let started={};
+function view(v){ ['guia','flags','libre','mc'].forEach(x=>{$('v-'+x).hidden=x!==v; $('tab-'+x).setAttribute('aria-pressed',x===v);});
+  if(!started[v]){ started[v]=1; if(v==='guia') gstart(MIS[0].id); if(v==='flags') frender(); if(v==='libre') lstart(); if(v==='mc') mcnew(); }
+  try{localStorage.setItem('term-view',v);}catch(e){} }
+document.querySelectorAll('.tabs .tab').forEach(b=>b.onclick=()=>view(b.dataset.v));
+let v0='guia'; try{v0=localStorage.getItem('term-view')||'guia';}catch(e){}
+view(['guia','flags','libre','mc'].includes(v0)?v0:'guia');
+})();
+</script>
+
+</body>
+</html>
