@@ -17,7 +17,7 @@ App de práctica para el **2.º parcial de Sistemas Operativos** (USAL, Ingenier
 - "Escribí el comando", en una terminal simulada.
 - Repaso de lo que erraste al final de cada ronda.
 
-También incluye `guia.html`, la guía resumida con el parcial anterior.
+También incluye **`archivos.html`**, un simulador visual del disco (guardar, abrir y borrar paso a paso, métodos de asignación y journaling), y `guia.html`, la guía resumida con el parcial anterior.
 
 ## Instalarla como app
 

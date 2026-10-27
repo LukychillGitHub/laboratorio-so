@@ -1,0 +1,482 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2948b8">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
+<title>El disco por dentro</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: una columna de explicación + "mesa de trabajo" con los paneles del disco en grilla; el paso actual siempre a la vista */
+:root{
+  --paper:#f4f6f9; --sheet:#ffffff; --ink:#18202c; --muted:#5a6578; --rule:#d9dfe8;
+  --pen:#2948b8; --pen-soft:#e6ebfb; --hl:#f2b705; --hl-soft:#fff4cc;
+  --ok:#1b7a49; --ok-soft:#e2f3e9; --bad:#b3261e; --bad-soft:#fbe6e4;
+  --c1:#1f8a7a; --c2:#c47a12; --c3:#2f63d6; --c4:#8a43c9; --c5:#c2417a; --c6:#5b7a1f; --free:#eef1f6; --on:#ffffff;
+  --term:#0f1420; --term-fg:#d6dcea;
+  --display:"Familjen Grotesk",system-ui,sans-serif; --body:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#0f1219; --sheet:#171c26; --ink:#e6e9f0; --muted:#9aa4b6; --rule:#2a3140;
+  --pen:#8fa6ff; --pen-soft:#1e2646; --hl:#ffcc33; --hl-soft:#3a3214;
+  --ok:#5fd39a; --ok-soft:#163325; --bad:#ff8a80; --bad-soft:#3a1c1a;
+  --c1:#27a693; --c2:#d98f2b; --c3:#4c7ff0; --c4:#a464e0; --c5:#dc5a93; --c6:#7a9a35; --free:#222937; --on:#0b0e14; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0f1219; --sheet:#171c26; --ink:#e6e9f0; --muted:#9aa4b6; --rule:#2a3140;
+  --pen:#8fa6ff; --pen-soft:#1e2646; --hl:#ffcc33; --hl-soft:#3a3214;
+  --ok:#5fd39a; --ok-soft:#163325; --bad:#ff8a80; --bad-soft:#3a1c1a;
+  --c1:#27a693; --c2:#d98f2b; --c3:#4c7ff0; --c4:#a464e0; --c5:#dc5a93; --c6:#7a9a35; --free:#222937; --on:#0b0e14; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font:15.5px/1.6 var(--body);margin:0}
+.wrap{max-width:1040px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 80px;display:flex;flex-direction:column;gap:28px}
+h1{font:700 clamp(30px,5.2vw,48px)/1.04 var(--display);margin:0;text-wrap:balance}
+h2{font:700 26px/1.15 var(--display);margin:0;text-wrap:balance}
+h3{font:600 15px/1.3 var(--body);margin:0}
+p{margin:0;max-width:68ch}
+.eyebrow{font:500 12px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.lead{color:var(--muted)}
+.stack{display:flex;flex-direction:column;gap:12px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+section{display:flex;flex-direction:column;gap:16px}
+.btn{font:500 14px/1 var(--body);border-radius:999px;padding:10px 15px;border:1px solid var(--pen);background:var(--pen);color:var(--sheet);cursor:pointer}
+.btn.ghost{background:var(--sheet);color:var(--pen)}
+.btn:disabled{opacity:.4;cursor:default}
+.btn:focus-visible,select:focus-visible,.seg:focus-visible,.tab:focus-visible{outline:2px solid var(--pen);outline-offset:2px}
+select{font:inherit;font-size:14px;padding:8px 10px;border-radius:999px;border:1px solid var(--rule);background:var(--sheet);color:var(--ink)}
+code{font:500 .9em var(--mono);background:var(--pen-soft);padding:1px 5px;border-radius:4px}
+
+/* tira del disco */
+.strip{display:flex;border-radius:12px;overflow:hidden;border:1px solid var(--rule);background:var(--sheet);min-height:64px}
+.seg{flex:1;border:0;border-right:1px solid var(--rule);background:transparent;color:var(--ink);font:600 13px/1.2 var(--body);padding:10px 6px;cursor:pointer;display:flex;flex-direction:column;gap:3px;align-items:center;justify-content:center;text-align:center;min-width:0}
+.seg small{font:400 11px/1.2 var(--mono);color:var(--muted)}
+.seg:last-child{border-right:0}
+.seg.mbr{flex:.7;background:var(--pen-soft)}
+.seg.data{flex:2.6}
+.seg.on,.seg:hover{background:var(--hl-soft)}
+.seg.on{box-shadow:inset 0 -4px 0 var(--hl)}
+.seginfo{background:var(--sheet);border:1px solid var(--rule);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.part-label{display:flex;font:500 11px/1 var(--mono);color:var(--muted)}
+.part-label span:first-child{flex:.7}
+.part-label span:last-child{flex:6.6;text-align:center;border-top:1.5px solid var(--muted);padding-top:6px;margin-left:4px}
+
+/* narrador */
+.narr{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--ink);color:var(--paper);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;box-shadow:0 6px 20px rgba(0,0,0,.18)}
+.narr .eyebrow{color:var(--hl)}
+.narr p{font-size:15.5px;max-width:none}
+.narr b{color:var(--hl)}
+.narr .btn{background:var(--hl);border-color:var(--hl);color:#1a1400}
+.narr .btn.ghost{background:transparent;color:var(--paper);border-color:var(--paper)}
+.dots{display:flex;gap:5px}
+.dots i{width:22px;height:5px;border-radius:9px;background:rgba(255,255,255,.25)}
+.dots i.done{background:var(--hl)}
+
+/* mesa */
+.bench{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:760px){.bench{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--sheet);border:1px solid var(--rule);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;min-width:0;transition:border-color .2s,box-shadow .2s}
+.panel.on{border-color:var(--hl);box-shadow:0 0 0 3px var(--hl-soft)}
+.panel .ph{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.panel .ph small{font:400 12px/1.3 var(--body);color:var(--muted);text-align:right}
+.panel.wide{grid-column:1/-1}
+.tree{font:500 14px/1.7 var(--mono);display:flex;flex-direction:column}
+.tree .entry{display:flex;gap:8px;align-items:center;border-radius:6px;padding:0 6px;margin-left:-6px}
+.tree .entry.on{background:var(--hl-soft);outline:2px solid var(--hl)}
+.tree .arrow{color:var(--muted)}
+.tree .ino{font-weight:600;color:var(--pen)}
+.dim{color:var(--muted)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:14px}
+.kv dt{color:var(--muted)} .kv dd{margin:0;font:500 14px/1.4 var(--mono);font-variant-numeric:tabular-nums}
+.kv dd.on{background:var(--hl-soft);border-radius:4px;padding:0 4px;margin-left:-4px}
+.bits{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:4px}
+.bit{display:flex;flex-direction:column;align-items:center;gap:2px;font:600 15px/1 var(--mono);padding:7px 0;border-radius:6px;background:var(--free);color:var(--muted)}
+.bit small{font:400 9.5px/1 var(--mono);color:var(--muted)}
+.bit.one{background:var(--ink);color:var(--paper)}
+.bit.one small{color:var(--paper);opacity:.7}
+.bit.on{outline:3px solid var(--hl);outline-offset:1px}
+.bit.cand{outline:3px dashed var(--hl);outline-offset:1px}
+@media (max-width:520px){.bits{grid-template-columns:repeat(8,minmax(0,1fr))}}
+.inodes{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.icard{border:1px solid var(--rule);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:3px;font-size:12.5px;background:var(--paper)}
+.icard b{font:600 13px/1.2 var(--mono)}
+.icard .mono{font-family:var(--mono)}
+.icard.on{outline:3px solid var(--hl);background:var(--hl-soft)}
+.icard.gone{opacity:.45;border-style:dashed}
+.icard .noname{font-size:11.5px;color:var(--bad)}
+.blocks{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:6px}
+.blk{aspect-ratio:1.25;max-width:100%;border-radius:8px;background:var(--free);display:flex;flex-direction:column;justify-content:space-between;padding:6px 7px;font:500 11px/1.15 var(--mono);color:var(--muted);min-width:0;overflow:hidden}
+.blk .n{opacity:.8}
+.blk .f{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.blk.full{color:var(--on)}
+.blk.full .n{opacity:.85}
+.blk.stale{background:repeating-linear-gradient(135deg,var(--free) 0 6px,transparent 6px 12px);border:1.5px dashed var(--muted);color:var(--muted)}
+.blk.on{outline:3px solid var(--hl);outline-offset:2px}
+.blk.cand{outline:3px dashed var(--hl);outline-offset:2px}
+@media (max-width:520px){.blocks{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.legend{font-size:12.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:12px}
+.sw{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:-1px;margin-right:5px}
+.preview{border:1px solid var(--ok);background:var(--ok-soft);color:var(--ok);border-radius:10px;padding:10px 12px;font-weight:500}
+.err{border:1px solid var(--bad);background:var(--bad-soft);color:var(--bad);border-radius:10px;padding:10px 12px;font-weight:500}
+
+/* asignación */
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{font:600 14px/1 var(--body);padding:10px 14px;border-radius:10px;border:1px solid var(--rule);background:var(--sheet);color:var(--muted);cursor:pointer}
+.tab[aria-pressed="true"]{background:var(--pen);border-color:var(--pen);color:var(--sheet)}
+.steps3{display:flex;gap:6px;flex-wrap:wrap}
+.steps3 .tab[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.ablocks{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:6px}
+.ablk{border-radius:8px;background:var(--free);padding:6px 7px;min-height:58px;display:flex;flex-direction:column;justify-content:space-between;font:500 11.5px/1.2 var(--mono);color:var(--muted);min-width:0}
+.ablk.full{color:var(--on)}
+.ablk .ptr{font-weight:600}
+.ablk.bad{outline:3px dashed var(--bad);outline-offset:1px}
+@media (max-width:520px){.ablocks{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.tbl{overflow-x:auto;border:1px solid var(--rule);border-radius:10px;background:var(--sheet)}
+table{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums}
+th,td{padding:6px 10px;border-bottom:1px solid var(--rule);text-align:left;font-family:var(--mono)}
+th{font:600 11px/1.2 var(--body);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:var(--paper)}
+tr:last-child td{border-bottom:0}
+.fat{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:4px;font:500 12px/1.2 var(--mono)}
+.fat div{border:1px solid var(--rule);border-radius:6px;padding:5px 6px;display:flex;justify-content:space-between;gap:4px;background:var(--paper);min-width:0}
+.fat div span:first-child{color:var(--muted)}
+@media (max-width:520px){.fat{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.verdict{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (max-width:600px){.verdict{grid-template-columns:minmax(0,1fr)}}
+.pro,.con{border-radius:10px;padding:10px 12px;font-size:14px}
+.pro{background:var(--ok-soft)} .pro b{color:var(--ok)}
+.con{background:var(--bad-soft)} .con b{color:var(--bad)}
+
+/* journaling */
+.jgrid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:12px}
+@media (max-width:700px){.jgrid{grid-template-columns:minmax(0,1fr)}}
+.chips{display:flex;flex-direction:column;gap:6px}
+.chip{display:flex;gap:10px;align-items:center;border:1px solid var(--rule);border-radius:10px;padding:9px 12px;background:var(--paper);font-size:14px}
+.chip .st{font:600 12px/1 var(--mono);min-width:70px;text-align:center;border-radius:99px;padding:5px 8px;background:var(--free);color:var(--muted)}
+.chip.ok .st{background:var(--ok-soft);color:var(--ok)}
+.chip.no .st{background:var(--bad-soft);color:var(--bad)}
+.chip.run .st{background:var(--hl-soft);color:var(--ink)}
+.journal{background:var(--term);color:var(--term-fg);border-radius:10px;padding:12px 14px;font:13px/1.6 var(--mono);min-height:120px;white-space:pre-wrap}
+.journal .off{color:#7d889e}
+.switch{display:flex;gap:8px;align-items:center;font-weight:500;cursor:pointer}
+.switch input{width:18px;height:18px;accent-color:var(--pen)}
+.power{font:700 15px/1 var(--display);letter-spacing:.02em}
+/* repaso */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
+details.card{background:var(--sheet);border:1px solid var(--rule);border-radius:12px;padding:12px 14px}
+details.card summary{cursor:pointer;font-weight:600;list-style:none;display:flex;justify-content:space-between;gap:10px}
+details.card summary::after{content:"ver";font:500 12px/1.6 var(--mono);color:var(--pen)}
+details.card[open] summary::after{content:"ocultar"}
+details.card p{margin-top:8px;font-size:14.5px}
+.key{background:var(--pen-soft);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.key b{color:var(--pen)}
+@media (prefers-reduced-motion:reduce){.panel{transition:none}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+<header class="stack" style="gap:10px">
+  <span class="eyebrow">Sistemas Operativos · Unidad 10 · Sistemas de archivos</span>
+  <h1>El disco por dentro</h1>
+  <p class="lead">Guardá, abrí y borrá archivos, y mirá paso a paso qué hace el sistema operativo en el disco: el mapa de bits, los inodos, las carpetas y los bloques. Abajo también podés ver los métodos de asignación y qué pasa con el journaling si se corta la luz.</p>
+</header>
+
+<!-- 1. LA ESTRUCTURA -->
+<section>
+  <h2>1. Así está dividido el disco</h2>
+  <p>Tocá cada parte para ver qué es. El MBR es del disco entero; lo demás pertenece a <b>una partición</b>, y cada partición tiene su propio sistema de archivos.</p>
+  <div class="strip" id="strip">
+    <button class="seg mbr" data-s="mbr" id="seg-mbr">MBR<small>sector 0</small></button>
+    <button class="seg" data-s="sb" id="seg-sb">Superbloque<small>resumen</small></button>
+    <button class="seg" data-s="bm" id="seg-bm">Mapa de bits<small>libres / ocupados</small></button>
+    <button class="seg" data-s="ino" id="seg-ino">Inodos<small>fichas</small></button>
+    <button class="seg data" data-s="data" id="seg-data">Bloques de datos<small>el contenido real (y las carpetas)</small></button>
+  </div>
+  <div class="part-label"><span>disco entero</span><span>partición 1 (ext4)</span></div>
+  <div class="seginfo" id="seginfo"></div>
+</section>
+
+<!-- 2. SIMULADOR -->
+<section>
+  <h2>2. Probalo: guardá, abrí y borrá</h2>
+  <p>Elegí una acción y avanzá con <b>Siguiente paso</b>. En cada paso se ilumina en amarillo lo que el SO está tocando.</p>
+  <div class="row" id="actions">
+    <button class="btn" id="a-foto">Guardar foto.jpg (3 bloques)</button>
+    <button class="btn" id="a-video">Guardar video.mp4 (5 bloques)</button>
+    <button class="btn" id="a-notas">Guardar notas.txt (1 bloque)</button>
+    <label for="sel-open" class="dim" style="font-size:14px">Abrir:</label>
+    <select id="sel-open"></select><button class="btn ghost" id="a-open">Abrir</button>
+    <label for="sel-del" class="dim" style="font-size:14px">Borrar:</label>
+    <select id="sel-del"></select><button class="btn ghost" id="a-del">Borrar</button>
+    <button class="btn ghost" id="a-reset">Volver al inicio</button>
+  </div>
+  <div class="narr" id="narr" aria-live="polite"></div>
+  <div class="bench">
+    <div class="panel" id="p-dirs"><div class="ph"><h3>Carpetas (directorios)</h3><small>cada entrada es nombre → número de inodo</small></div><div class="tree" id="tree"></div></div>
+    <div class="panel" id="p-sb"><div class="ph"><h3>Superbloque</h3><small>el resumen de la partición</small></div><dl class="kv" id="sb"></dl></div>
+    <div class="panel wide" id="p-bm"><div class="ph"><h3>Mapa de bits</h3><small>un casillero por bloque · 0 = libre · 1 = ocupado</small></div><div class="bits" id="bits"></div></div>
+    <div class="panel wide" id="p-ino"><div class="ph"><h3>Tabla de inodos</h3><small>la ficha de cada archivo: todo menos el nombre</small></div><div class="inodes" id="inodes"></div></div>
+    <div class="panel wide" id="p-data"><div class="ph"><h3>Bloques de datos</h3><small>16 bloques de 4 KB · acá está el contenido</small></div><div class="blocks" id="blocks"></div><div class="legend" id="legend"></div><div id="preview"></div></div>
+  </div>
+</section>
+
+<!-- 3. ASIGNACIÓN -->
+<section>
+  <h2>3. ¿Dónde se ponen los bloques de un archivo?</h2>
+  <p>Mismo escenario con los 4 métodos de asignación del apunte: guardás A (4 bloques), B (3) y C (5), borrás B y después intentás guardar D, que necesita <b>6 bloques</b>. Cambiá de método y de paso para comparar.</p>
+  <div class="tabs" id="mtabs">
+    <button class="tab" data-m="cont" id="m-cont">Contigua</button>
+    <button class="tab" data-m="link" id="m-link">Lista enlazada</button>
+    <button class="tab" data-m="fat" id="m-fat">FAT</button>
+    <button class="tab" data-m="ino" id="m-ino">Nodos-i (inodos)</button>
+  </div>
+  <div class="steps3" id="stabs">
+    <button class="tab" data-st="1" id="st-1">1 · Guardar A, B y C</button>
+    <button class="tab" data-st="2" id="st-2">2 · Borrar B</button>
+    <button class="tab" data-st="3" id="st-3">3 · Guardar D (6 bloques)</button>
+  </div>
+  <div class="panel"><div class="ablocks" id="ablocks"></div></div>
+  <div class="stack" id="ameta"></div>
+  <div class="verdict" id="averdict"></div>
+</section>
+
+<!-- 4. JOURNALING -->
+<section>
+  <h2>4. Journaling: ¿qué pasa si se corta la luz?</h2>
+  <p>Guardar un archivo son <b>4 pasos</b>. Si se corta la luz en el medio, el disco queda a medio hacer. Probá con el journaling apagado y después prendido.</p>
+  <div class="row">
+    <label class="switch" for="jon"><input type="checkbox" id="jon"> Journaling activado (NTFS, ext3, ext4)</label>
+  </div>
+  <div class="row">
+    <button class="btn" id="j-ok">Guardar informe.pdf normalmente</button>
+    <button class="btn ghost" id="j-cut"><span class="power">⚡</span> Guardar y cortar la luz a la mitad</button>
+    <button class="btn ghost" id="j-boot" disabled>Prender la PC</button>
+  </div>
+  <div class="jgrid">
+    <div class="panel"><h3>Estado del disco</h3><div class="chips" id="chips"></div><div id="jmsg"></div></div>
+    <div class="panel"><h3>Journal (la libreta)</h3><div class="journal" id="journal"></div></div>
+  </div>
+</section>
+
+<!-- 5. REPASO -->
+<section>
+  <h2>5. Repaso rápido</h2>
+  <p>Intentá responder cada pregunta en voz alta antes de abrirla.</p>
+  <div class="cards">
+    <details class="card"><summary>¿Qué es un archivo?</summary><p>Una unidad lógica de información <b>persistente</b>, creada por los procesos. Resuelve las 3 condiciones del almacenamiento: mucha capacidad, persistencia y acceso de varios procesos a la vez.</p></details>
+    <details class="card"><summary>¿Qué tiene el MBR?</summary><p>Es el <b>primer sector</b> del disco: tiene el código de arranque y la tabla de particiones. Sin MBR, la PC no arranca ni encuentra las particiones.</p></details>
+    <details class="card"><summary>¿Qué es una partición?</summary><p>Una división del disco con <b>su propio</b> sistema de archivos (por ejemplo, una ext4 y otra NTFS).</p></details>
+    <details class="card"><summary>¿Qué guarda el superbloque?</summary><p>El resumen de la partición: tipo de FS, tamaño, bloques libres y ocupados, cantidad de inodos y dónde está la raíz. Si se daña, se pierde el acceso.</p></details>
+    <details class="card"><summary>¿Cómo se sabe qué bloques están libres?</summary><p>Con un <b>mapa de bits</b> (0 libre, 1 ocupado) o con una <b>lista enlazada</b> de bloques libres.</p></details>
+    <details class="card"><summary>¿Qué guarda un inodo?</summary><p>Todo sobre el archivo <b>menos el nombre</b>: permisos, dueño, fechas, tamaño y punteros a sus bloques.</p></details>
+    <details class="card"><summary>¿Dónde está el nombre del archivo?</summary><p>En la <b>carpeta</b> (directorio). En UNIX, una carpeta es una lista de "nombre → número de inodo".</p></details>
+    <details class="card"><summary>Al borrar un archivo, ¿se borran los datos?</summary><p>No de inmediato: se borra el nombre de la carpeta, se libera el inodo y los bloques se marcan con 0. Los datos viejos quedan hasta que algo los sobrescribe (por eso a veces se pueden recuperar).</p></details>
+    <details class="card"><summary>Contigua vs lista enlazada</summary><p><b>Contigua:</b> bloques seguidos, muy rápida, pero genera <b>fragmentación</b>. <b>Enlazada:</b> cada bloque apunta al siguiente; no fragmenta, pero el acceso es <b>lento</b>.</p></details>
+    <details class="card"><summary>¿Qué es FAT?</summary><p>Una <b>tabla</b> que dice cuál es el siguiente bloque de cada archivo. Es eficiente, pero queda limitada en discos grandes.</p></details>
+    <details class="card"><summary>¿Qué es el journaling?</summary><p>Anotar en un registro lo que se va a hacer <b>antes</b> de hacerlo. Si se corta la luz, al reiniciar se lee el registro y el disco vuelve a un estado consistente en segundos. Lo tienen NTFS, ext3 y ext4; FAT32 no.</p></details>
+    <details class="card"><summary>Ruta absoluta vs relativa</summary><p><b>Absoluta:</b> desde la raíz (<code>/home/lucas/Fotos/foto.jpg</code>). <b>Relativa:</b> desde donde estás (<code>Fotos/foto.jpg</code>).</p></details>
+  </div>
+  <div class="key"><b>En una frase:</b> guardar = buscar bloques libres en el mapa de bits → escribir los datos → marcarlos como ocupados → crear el inodo → anotar "nombre → inodo" en la carpeta. Abrir = carpeta → inodo → bloques.</div>
+</section>
+</div>
+
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'})[c]);
+const RM=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- 1. tira ---------- */
+const SEG={
+ mbr:['MBR (Master Boot Record)','Es el <b>primer sector del disco</b>, el sector 0. Tiene el <b>código de arranque</b> (lo que la PC ejecuta al prender para cargar el SO) y la <b>tabla de particiones</b>, que dice dónde empieza y termina cada partición. Sin MBR la PC no arranca ni encuentra las particiones. Es como la <b>recepción</b> de un edificio.'],
+ sb:['Superbloque','Es el <b>resumen</b> de esta partición: el tipo de sistema de archivos (ext4), el tamaño, cuántos bloques hay libres y ocupados, cuántos inodos hay y dónde está la raíz <code>/</code>. Si se daña, se puede perder el acceso a toda la partición. Es como el <b>cartel con el plano</b> en cada piso.'],
+ bm:['Mapa de bits','Un casillero por cada bloque de datos: <b>0 = libre, 1 = ocupado</b>. Cuando guardás algo, el SO busca ceros acá. La alternativa del apunte es una <b>lista enlazada</b> de bloques libres, donde cada bloque libre apunta al siguiente.'],
+ ino:['Tabla de inodos','Un <b>inodo</b> por archivo. Guarda <b>todo menos el nombre</b>: dueño, permisos, fechas, tamaño y la lista de bloques donde están los datos. Es como la <b>ficha</b> de un libro en la biblioteca.'],
+ data:['Bloques de datos','Acá está el <b>contenido real</b> de los archivos, en bloques de unos <b>4 KB</b>. Las <b>carpetas</b> también son archivos que viven en bloques: su contenido es la lista "nombre → número de inodo".'],
+};
+function showSeg(k){document.querySelectorAll('.seg').forEach(s=>s.classList.toggle('on',s.dataset.s===k)); $('seginfo').innerHTML=`<h3>${SEG[k][0]}</h3><p>${SEG[k][1]}</p>`;}
+document.querySelectorAll('.seg').forEach(s=>s.onclick=()=>showSeg(s.dataset.s));
+showSeg('mbr');
+
+/* ---------- 2. simulador ---------- */
+const N=16;
+const CAT={'playa.jpg':{size:3,folder:'Fotos',c:'--c1'},'tp.docx':{size:2,folder:'Documentos',c:'--c2'},'foto.jpg':{size:3,folder:'Fotos',c:'--c3'},'video.mp4':{size:5,folder:'Fotos',c:'--c4'},'notas.txt':{size:1,folder:'Documentos',c:'--c5'}};
+let S, HL=new Set(), CAND=new Set(), OP=null, PREVIEW='';
+function init(){
+  S={blocks:Array(N).fill(null),bits:Array(N).fill(0),inodes:{},dirs:{Fotos:{},Documentos:{}},next:3,gone:{}};
+  const put=(name,ino,bl)=>{bl.forEach((b,i)=>{S.blocks[b]={f:name,p:i+1,t:bl.length};S.bits[b]=1;}); S.inodes[ino]={file:name,size:bl.length,blocks:bl,time:'26/10 21:00'}; S.dirs[CAT[name].folder][name]=ino;};
+  put('playa.jpg',1,[0,1,2]); put('tp.docx',2,[3,4]);
+  HL=new Set(); CAND=new Set(); OP=null; PREVIEW='';
+}
+const freeCount=()=>S.bits.filter(b=>!b).length;
+const usedIno=()=>Object.keys(S.inodes).length;
+const findFolder=name=>Object.keys(S.dirs).find(d=>name in S.dirs[d]);
+const allFiles=()=>Object.keys(S.dirs).flatMap(d=>Object.keys(S.dirs[d]));
+
+function render(){
+  // árbol
+  const ent=(d)=>Object.entries(S.dirs[d]).map(([n,i])=>`<div class="entry ${HL.has('dir:'+n)?'on':''}">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${HL.has('dir:'+n)?'▸':'·'} ${esc(n)} <span class="arrow">→</span> <span class="ino">inodo ${i}</span></div>`).join('')||`<div class="dim">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(vacía)</div>`;
+  $('tree').innerHTML=`<div>/ <span class="dim">(raíz)</span></div><div>└─ home/</div><div>&nbsp;&nbsp;&nbsp;└─ lucas/</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├─ Fotos/</div>${ent('Fotos')}<div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ Documentos/</div>${ent('Documentos')}`;
+  // superbloque
+  const f=freeCount(), on=HL.has('sb');
+  $('sb').innerHTML=`<dt>Tipo</dt><dd>ext4</dd><dt>Tamaño de bloque</dt><dd>4 KB</dd><dt>Bloques totales</dt><dd>${N}</dd><dt>Bloques libres</dt><dd class="${on?'on':''}">${f}</dd><dt>Bloques ocupados</dt><dd class="${on?'on':''}">${N-f}</dd><dt>Inodos usados</dt><dd class="${on?'on':''}">${usedIno()} de 8</dd><dt>Raíz</dt><dd>/</dd>`;
+  // bits
+  $('bits').innerHTML=S.bits.map((b,i)=>`<div class="bit ${b?'one':''} ${HL.has('bm:'+i)?'on':''} ${CAND.has(i)?'cand':''}"><small>${i}</small>${b}</div>`).join('');
+  // inodos
+  const ids=Object.keys(S.inodes).map(Number).concat(Object.keys(S.gone).map(Number)).sort((a,b)=>a-b);
+  $('inodes').innerHTML=ids.map(n=>{const g=!S.inodes[n], x=S.inodes[n]||S.gone[n];
+    return `<div class="icard ${HL.has('ino:'+n)?'on':''} ${g?'gone':''}"><b>Inodo ${n}${g?' · libre':''}</b><span>dueño: <span class="mono">lucas</span></span><span>permisos: <span class="mono">rw-r--r--</span></span><span>tamaño: <span class="mono">${x.size*4} KB</span></span><span>modificado: <span class="mono">${x.time}</span></span><span>bloques: <span class="mono">${x.blocks.join(', ')}</span></span><span class="noname">sin nombre (está en la carpeta)</span></div>`;}).join('')||'<span class="dim">No hay inodos en uso.</span>';
+  // bloques
+  $('blocks').innerHTML=S.blocks.map((b,i)=>{
+    const live=b&&(S.bits[i]||b.fresh); const stale=b&&!live;
+    const st=live?`background:var(${CAT[b.f].c})`:'';
+    return `<div class="blk ${live?'full':''} ${stale?'stale':''} ${HL.has('blk:'+i)?'on':''} ${CAND.has(i)?'cand':''}" style="${st}"><span class="n">#${i}</span><span class="f">${b?esc(b.f.split('.')[0]):''}</span><span>${b?(stale?'datos viejos':b.p+'/'+b.t):'libre'}</span></div>`;}).join('');
+  $('legend').innerHTML=Object.keys(CAT).filter(n=>allFiles().includes(n)).map(n=>`<span><i class="sw" style="background:var(${CAT[n].c})"></i>${n}</span>`).join('')+'<span><i class="sw" style="background:var(--free)"></i>libre</span>'+(S.blocks.some((b,i)=>b&&!S.bits[i]&&!b.fresh)?'<span><i class="sw" style="border:1.5px dashed var(--muted)"></i>libre con datos viejos</span>':'');
+  $('preview').innerHTML=PREVIEW;
+  // paneles
+  const pre={'p-dirs':'dir:','p-sb':'sb','p-bm':'bm:','p-ino':'ino:','p-data':'blk:'};
+  for(const p in pre) $(p).classList.toggle('on',[...HL].some(k=>k.startsWith(pre[p]))||(p==='p-bm'&&CAND.size>0&&OP&&OP.i===1));
+  // selects
+  const files=allFiles(); const fill=(sel)=>{const v=sel.value; sel.innerHTML=files.map(n=>`<option ${n===v?'selected':''}>${n}</option>`).join('')||'<option value="">(no hay)</option>';};
+  fill($('sel-open')); fill($('sel-del'));
+  const busy=!!(OP&&OP.i<OP.steps.length);
+  $('a-foto').disabled=busy||files.includes('foto.jpg'); $('a-video').disabled=busy||files.includes('video.mp4'); $('a-notas').disabled=busy||files.includes('notas.txt');
+  $('a-open').disabled=$('a-del').disabled=busy||!files.length; $('sel-open').disabled=$('sel-del').disabled=busy;
+  renderNarr();
+}
+function renderNarr(){
+  const n=$('narr');
+  if(!OP){n.innerHTML=`<span class="eyebrow">Listo para empezar</span><p>El disco ya tiene <b>playa.jpg</b> y <b>tp.docx</b> guardados. Elegí una acción de arriba, por ejemplo <b>Guardar foto.jpg</b>, y vas a ver cada paso.</p>`;return;}
+  const i=OP.i, tot=OP.steps.length, done=i>=tot;
+  const cur=i===0?OP.intro:OP.steps[i-1].t;
+  n.innerHTML=`<span class="eyebrow">${esc(OP.title)} · ${i===0?'antes de empezar':'paso '+i+' de '+tot}</span><div class="dots">${OP.steps.map((s,k)=>`<i class="${k<i?'done':''}"></i>`).join('')}</div><p>${cur}</p>
+   <div class="row">${done?`<button class="btn" id="n-end">Listo ✓ · elegir otra acción</button>`:`<button class="btn" id="n-next">${i===0?'Empezar':'Siguiente paso'} →</button><button class="btn ghost" id="n-all">Hacer todo</button>`}</div>`;
+  if($('n-next')) $('n-next').onclick=()=>step();
+  if($('n-all')) $('n-all').onclick=()=>{while(OP.i<OP.steps.length) step(true); render();};
+  if($('n-end')) $('n-end').onclick=()=>{OP=null;HL=new Set();CAND=new Set();render(); $('actions').scrollIntoView({block:'nearest'});};
+}
+function step(silent){ const s=OP.steps[OP.i]; HL=new Set(); CAND=new Set(); s.run&&s.run(); (s.hl||[]).forEach(k=>HL.add(k)); (s.cand||[]).forEach(k=>CAND.add(k)); OP.i++; if(!silent) render(); }
+function start(op){ PREVIEW=''; HL=new Set(); CAND=new Set(); OP={...op,i:0}; render(); $('narr').scrollIntoView({block:'nearest'}); }
+
+function opSave(name){
+  const {size,folder}=CAT[name]; const free=S.bits.map((b,i)=>b?null:i).filter(x=>x!==null);
+  if(free.length<size){ PREVIEW=`<div class="err">No hay lugar: ${name} necesita ${size} bloques y quedan ${free.length} libres. Borrá algo primero.</div>`; render(); return; }
+  const bl=free.slice(0,size), ino=S.next; const seq=bl.slice(1).some((b,k)=>b!==bl[k]+1);
+  start({title:'Guardar '+name, intro:`Vas a guardar <b>${name}</b> (${size*4} KB = ${size} bloque${size>1?'s':''} de 4 KB) en la carpeta <b>${folder}</b>. El SO lo hace en 6 pasos.`, steps:[
+    {t:`<b>Buscar lugar.</b> El SO mira el <b>mapa de bits</b> buscando ceros (bloques libres). Encuentra ${bl.length>1?'los bloques':'el bloque'} <b>${bl.join(', ')}</b>.${seq?' No están todos seguidos, pero con inodos <b>no importa</b>: la ficha va a anotar cada uno.':''}`, cand:bl, hl:bl.map(b=>'bm:'+b)},
+    {t:`<b>Escribir los datos.</b> El contenido de ${name} se escribe en ${bl.length>1?'los bloques':'el bloque'} ${bl.join(', ')}. Es el contenido del archivo en sí, en bytes. Todavía nadie sabe que esos bloques están ocupados: falta marcarlos.`, run:()=>bl.forEach((b,k)=>S.blocks[b]={f:name,p:k+1,t:bl.length,fresh:true}), hl:bl.map(b=>'blk:'+b)},
+    {t:`<b>Marcar como ocupados.</b> En el mapa de bits, ${bl.length>1?'esos casilleros pasan':'ese casillero pasa'} de 0 a <b>1</b>, así nadie más los usa.`, run:()=>bl.forEach(b=>S.bits[b]=1), hl:bl.map(b=>'bm:'+b)},
+    {t:`<b>Crear la ficha (inodo ${ino}).</b> Se anota el dueño, los permisos, el tamaño, la fecha y <b>en qué bloques está</b> (${bl.join(', ')}). Fijate que la ficha <b>no tiene el nombre</b>.`, run:()=>{S.inodes[ino]={file:name,size,blocks:bl,time:'hoy'}; delete S.gone[ino]; S.next++;}, hl:['ino:'+ino]},
+    {t:`<b>Anotar el nombre en la carpeta.</b> En <b>${folder}/</b> se agrega la línea <code>${name} → inodo ${ino}</code>. El nombre vive <b>acá</b>, en el directorio, no en el inodo.`, run:()=>S.dirs[folder][name]=ino, hl:['dir:'+name]},
+    {t:`<b>Actualizar el superbloque.</b> Ahora quedan ${freeCount()-0} bloques libres y hay un inodo más en uso. <b>Listo, el archivo está guardado.</b> Probá abrirlo.`, hl:['sb']},
+  ]});
+  // el texto del último paso debe reflejar los libres después de marcar
+  OP.steps[5].t=`<b>Actualizar el superbloque.</b> Ahora quedan <b>${S.bits.filter(b=>!b).length-size}</b> bloques libres y hay un inodo más en uso. <b>Listo, el archivo está guardado.</b> Probá abrirlo.`;
+}
+function opOpen(name){
+  const folder=findFolder(name), ino=S.dirs[folder][name], x=S.inodes[ino];
+  start({title:'Abrir '+name, intro:`Pediste abrir <code>/home/lucas/${folder}/${name}</code>. El SO tiene que encontrar dónde están los datos, y para eso sigue la ruta en 3 pasos.`, steps:[
+    {t:`<b>Buscar en la carpeta.</b> El SO recorre la ruta <code>/ → home → lucas → ${folder}</code> y en esa carpeta encuentra <code>${name} → inodo ${ino}</code>. Ya sabe qué ficha leer.`, hl:['dir:'+name]},
+    {t:`<b>Leer la ficha (inodo ${ino}).</b> Verifica los <b>permisos</b> (¿lucas puede leerlo? Sí, rw-) y lee la lista de bloques: <b>${x.blocks.join(', ')}</b>.`, hl:['ino:'+ino]},
+    {t:`<b>Leer los bloques ${x.blocks.join(', ')}</b> en ese orden y juntar el contenido. <b>¡Archivo abierto!</b>`, run:()=>{PREVIEW=`<div class="preview">✓ Se abrió ${name}: ${x.size*4} KB leídos de los bloques ${x.blocks.join(', ')}. Camino: carpeta → inodo ${ino} → bloques.</div>`;}, hl:x.blocks.map(b=>'blk:'+b)},
+  ]});
+}
+function opDel(name){
+  const folder=findFolder(name), ino=S.dirs[folder][name], x=S.inodes[ino];
+  start({title:'Borrar '+name, intro:`Vas a borrar <b>${name}</b>. Mirá bien: el SO <b>no borra los datos</b>, solo deja de apuntarlos.`, steps:[
+    {t:`<b>Sacar el nombre de la carpeta.</b> Se borra la línea <code>${name} → inodo ${ino}</code> de ${folder}/.`, run:()=>delete S.dirs[folder][name], hl:[]},
+    {t:`<b>Liberar la ficha (inodo ${ino}).</b> Queda disponible para otro archivo.`, run:()=>{S.gone[ino]=x; delete S.inodes[ino];}, hl:['ino:'+ino]},
+    {t:`<b>Marcar los bloques como libres.</b> En el mapa de bits, ${x.blocks.join(', ')} vuelven a <b>0</b>. Los bloques quedan rayados: los <b>datos viejos siguen ahí</b> hasta que otro archivo los sobrescriba. Por eso a veces se pueden recuperar archivos borrados.`, run:()=>x.blocks.forEach(b=>{S.bits[b]=0; if(S.blocks[b]) S.blocks[b].fresh=false;}), hl:x.blocks.map(b=>'bm:'+b).concat(x.blocks.map(b=>'blk:'+b))},
+    {t:`<b>Actualizar el superbloque:</b> más bloques libres y un inodo menos en uso. <b>Listo.</b>`, run:()=>{x.blocks.forEach(b=>{ if(S.blocks[b]) S.blocks[b]={...S.blocks[b]};});}, hl:['sb']},
+  ]});
+}
+$('a-foto').onclick=()=>opSave('foto.jpg'); $('a-video').onclick=()=>opSave('video.mp4'); $('a-notas').onclick=()=>opSave('notas.txt');
+$('a-open').onclick=()=>{const v=$('sel-open').value; if(v) opOpen(v);};
+$('a-del').onclick=()=>{const v=$('sel-del').value; if(v) opDel(v);};
+$('a-reset').onclick=()=>{init();render();};
+init(); render();
+
+/* ---------- 3. asignación ---------- */
+let M='cont', ST=1;
+const AC={A:'--c1',B:'--c2',C:'--c3',D:'--c4'};
+const BASE={A:[0,1,2,3],B:[4,5,6],C:[7,8,9,10,11]}, DBL=[4,5,6,12,13,14];
+function astate(){const f={}; if(ST>=1){f.A=BASE.A;f.C=BASE.C; if(ST===1) f.B=BASE.B;} if(ST===3&&M!=='cont') f.D=DBL; return f;}
+function arender(){
+  document.querySelectorAll('#mtabs .tab').forEach(t=>t.setAttribute('aria-pressed',t.dataset.m===M));
+  document.querySelectorAll('#stabs .tab').forEach(t=>t.setAttribute('aria-pressed',+t.dataset.st===ST));
+  const F=astate(), own=Array(16).fill(null);
+  for(const k in F) F[k].forEach((b,i)=>own[b]={f:k,i,list:F[k]});
+  const failD=ST===3&&M==='cont';
+  $('ablocks').innerHTML=own.map((o,b)=>{
+    let ptr='';
+    if(o&&M==='link'){const nx=o.list[o.i+1]; ptr=`<span class="ptr">→ ${nx===undefined?'fin':nx}</span>`;}
+    const bad=failD&&!o;
+    return `<div class="ablk ${o?'full':''} ${bad?'bad':''}" style="${o?`background:var(${AC[o.f]})`:''}"><span>#${b}</span><span style="font-weight:600">${o?o.f+(o.i+1):(bad?'hueco':'libre')}</span>${ptr||'<span></span>'}</div>`;}).join('');
+  // meta
+  const files=Object.keys(F);
+  let meta='';
+  if(M==='cont') meta=`<div class="tbl"><table><thead><tr><th>Archivo</th><th>Bloque inicial</th><th>Largo</th></tr></thead><tbody>${files.map(k=>`<tr><td>${k}</td><td>${F[k][0]}</td><td>${F[k].length}</td></tr>`).join('')}</tbody></table></div>`;
+  if(M==='link') meta=`<div class="tbl"><table><thead><tr><th>Archivo</th><th>Primer bloque</th></tr></thead><tbody>${files.map(k=>`<tr><td>${k}</td><td>${F[k][0]}</td></tr>`).join('')}</tbody></table></div><p class="dim" style="font-size:14px">El directorio solo sabe el primer bloque. Cada bloque guarda dentro un puntero ("→") al siguiente.</p>`;
+  if(M==='fat'){const fat=Array(16).fill('libre'); for(const k in F) F[k].forEach((b,i)=>fat[b]=F[k][i+1]===undefined?'fin':F[k][i+1]);
+    meta=`<div class="tbl"><table><thead><tr><th>Archivo</th><th>Primer bloque</th></tr></thead><tbody>${files.map(k=>`<tr><td>${k}</td><td>${F[k][0]}</td></tr>`).join('')}</tbody></table></div><h3>Tabla FAT (bloque → siguiente)</h3><div class="fat">${fat.map((v,i)=>`<div><span>${i}</span><span>${v}</span></div>`).join('')}</div><p class="dim" style="font-size:14px">Los punteros salen de los bloques y se juntan en <b>una tabla</b>. Para seguir un archivo se recorre la tabla, que se puede tener en memoria.</p>`;}
+  if(M==='ino') meta=`<div class="tbl"><table><thead><tr><th>Archivo</th><th>Inodo</th><th>Bloques (punteros en el inodo)</th></tr></thead><tbody>${files.map((k,i)=>`<tr><td>${k}</td><td>${({A:1,B:2,C:3,D:2})[k]}</td><td>${F[k].join(', ')}</td></tr>`).join('')}</tbody></table></div><p class="dim" style="font-size:14px">Cada archivo tiene su ficha con la <b>lista completa</b> de sus bloques: se puede saltar directo a cualquiera.</p>`;
+  const msgs={
+    1:{cont:'A, B y C quedan uno detrás del otro. Leer es rapidísimo: el SO sabe dónde empieza y cuántos bloques ocupa.',link:'Los bloques están seguidos, pero cada uno apunta al siguiente.',fat:'Igual que la lista enlazada, pero los punteros están en la tabla FAT.',ino:'Cada archivo tiene su inodo con la lista de sus bloques.'},
+    2:{cont:'Al borrar B queda un <b>hueco de 3 bloques</b> (4, 5 y 6) en el medio.',link:'Se libera B: los bloques 4, 5 y 6 quedan libres.',fat:'En la FAT, las entradas 4, 5 y 6 vuelven a "libre".',ino:'Se libera el inodo de B y los bloques 4, 5 y 6.'},
+    3:{cont:'<b>❌ D no entra.</b> Necesita 6 bloques <b>seguidos</b>. Hay 7 libres (4–6 y 12–15), pero separados: 3 y 4. Esto es la <b>fragmentación</b>: hay espacio, pero no sirve.',link:'<b>✓ D entra</b> en 4, 5, 6, 12, 13 y 14: no hace falta que estén seguidos, porque cada bloque apunta al siguiente. Pero para leer el bloque 6 de D hay que pasar por los 5 anteriores.',fat:'<b>✓ D entra</b> en 4, 5, 6, 12, 13 y 14. La cadena se sigue en la tabla FAT.',ino:'<b>✓ D entra</b> en 4, 5, 6, 12, 13 y 14. El inodo de D (reutiliza el que dejó B) lista los 6 bloques y se puede ir directo a cualquiera.'},
+  };
+  $('ameta').innerHTML=`<div class="${failD?'err':'key'}" style="${failD?'':'background:var(--pen-soft)'}">${msgs[ST][M]}</div>`+meta;
+  const V={cont:['Muy rápida: los bloques están juntos y se leen de corrido.','Fragmentación: quedan huecos que no se pueden aprovechar.'],
+    link:['Sin fragmentación: cualquier bloque libre sirve.','Acceso lento: para llegar al último hay que recorrer todos.'],
+    fat:['Eficiente: la tabla se recorre rápido y los bloques quedan solo para datos.','Limitada en discos grandes: la tabla se vuelve enorme.'],
+    ino:['El más avanzado (UNIX/Linux): cada archivo tiene su lista de bloques y se accede directo.','Necesita espacio para las fichas (la tabla de inodos).']};
+  $('averdict').innerHTML=`<div class="pro"><b>Ventaja:</b> ${V[M][0]}</div><div class="con"><b>Desventaja:</b> ${V[M][1]}</div>`;
+}
+document.querySelectorAll('#mtabs .tab').forEach(t=>t.onclick=()=>{M=t.dataset.m;arender();});
+document.querySelectorAll('#stabs .tab').forEach(t=>t.onclick=()=>{ST=+t.dataset.st;arender();});
+arender();
+
+/* ---------- 4. journaling ---------- */
+const TASKS=['Reservar los bloques 8 y 9 en el mapa de bits','Escribir los datos de informe.pdf','Crear el inodo 5','Anotar "informe.pdf → inodo 5" en la carpeta'];
+let J={st:[0,0,0,0],log:[],phase:'idle',timer:null};
+function jrender(){
+  $('chips').innerHTML=TASKS.map((t,i)=>{const s=J.st[i]; const cls=s===1?'ok':s===2?'run':s===3?'no':''; const lab=s===1?'hecho':s===2?'haciendo…':s===3?'no se hizo':'pendiente'; return `<div class="chip ${cls}"><span class="st">${lab}</span><span>${i+1}. ${t}</span></div>`;}).join('');
+  const on=$('jon').checked;
+  $('journal').innerHTML=on?(J.log.length?J.log.map(esc).join('\n'):'<span class="off">(vacío: todavía no se anotó nada)</span>'):'<span class="off">Journaling apagado (como en FAT32).\nNo se anota nada antes de hacer los cambios.</span>';
+  $('j-ok').disabled=$('j-cut').disabled=J.phase==='run'; $('j-boot').disabled=J.phase!=='off';
+}
+function jmsg(h){$('jmsg').innerHTML=h;}
+function jrun(cut){
+  clearTimeout(J.timer); const on=$('jon').checked;
+  J={st:[0,0,0,0],log:[],phase:'run',timer:null}; jmsg('');
+  if(on) J.log.push('VOY A HACER: guardar informe.pdf','  1. reservar bloques 8-9','  2. escribir datos','  3. crear inodo 5','  4. anotar nombre en la carpeta','');
+  jrender();
+  const d=RM?120:800; let i=0;
+  const tick=()=>{
+    if(cut&&i===2){ for(let k=2;k<4;k++) J.st[k]=3; J.phase='off'; if(on) J.log.push('⚡ (se cortó la luz acá: la operación no se marcó como terminada)');
+      jmsg(`<div class="err">⚡ Se cortó la luz después del paso 2. Tocá <b>Prender la PC</b>.</div>`); jrender(); return; }
+    if(i>0){J.st[i-1]=1; if(on) J.log.push('✓ paso '+i+' hecho');}
+    if(i===4){ J.phase='done'; if(on) J.log.push('','OPERACIÓN TERMINADA ✓ (se puede borrar del journal)'); jmsg('<div class="preview">✓ Se guardó bien. Con o sin journaling, si no hay cortes no hay problema.</div>'); jrender(); return; }
+    J.st[i]=2; jrender(); i++; J.timer=setTimeout(tick,d);
+  };
+  tick();
+}
+$('j-ok').onclick=()=>jrun(false);
+$('j-cut').onclick=()=>jrun(true);
+$('j-boot').onclick=()=>{
+  const on=$('jon').checked; J.phase='done';
+  if(on){ J.log.push('','AL PRENDER: leo el journal…','→ "guardar informe.pdf" quedó INCOMPLETA','→ la deshago: libero los bloques 8-9','DISCO CONSISTENTE ✓ (en segundos)'); J.st=[0,0,0,0];
+    jmsg(`<div class="preview">✓ <b>Con journaling:</b> al arrancar, el SO lee la libreta, ve que la operación quedó a medias y la <b>deshace</b> (o la completa). El disco queda consistente en segundos, sin revisar todo.</div>`);}
+  else { jmsg(`<div class="err">✗ <b>Sin journaling:</b> los bloques 8 y 9 quedaron <b>ocupados y con datos</b>, pero no hay inodo ni nombre que los apunte. Es espacio perdido y el disco quedó <b>inconsistente</b>. El SO no sabe qué pasó, así que tiene que revisar <b>todo el disco</b> (chkdsk / fsck), y eso puede tardar muchísimo.</div>`);}
+  jrender();
+};
+$('jon').onchange=()=>{clearTimeout(J.timer); J={st:[0,0,0,0],log:[],phase:'idle',timer:null}; jmsg(''); jrender();};
+jrender();
+})();
+</script>
+
+</body>
+</html>
