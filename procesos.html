@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2948b8">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
+<title>Procesos por dentro</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: una columna de secciones-laboratorio; cada una con su consola de control y un "narrador" oscuro que explica el paso actual */
+:root{
+  --paper:#f4f6f9; --sheet:#ffffff; --ink:#18202c; --muted:#5a6578; --rule:#d9dfe8;
+  --pen:#2948b8; --pen-soft:#e6ebfb; --hl:#f2b705; --hl-soft:#fff4cc;
+  --ok:#1b7a49; --ok-soft:#e2f3e9; --bad:#b3261e; --bad-soft:#fbe6e4;
+  --c1:#1f8a7a; --c2:#c47a12; --c3:#2f63d6; --c4:#8a43c9; --c5:#c2417a; --c6:#5b7a1f; --free:#eef1f6; --on:#ffffff;
+  --display:"Familjen Grotesk",system-ui,sans-serif; --body:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#0f1219; --sheet:#171c26; --ink:#e6e9f0; --muted:#9aa4b6; --rule:#2a3140;
+  --pen:#8fa6ff; --pen-soft:#1e2646; --hl:#ffcc33; --hl-soft:#3a3214;
+  --ok:#5fd39a; --ok-soft:#163325; --bad:#ff8a80; --bad-soft:#3a1c1a;
+  --c1:#27a693; --c2:#d98f2b; --c3:#4c7ff0; --c4:#a464e0; --c5:#dc5a93; --c6:#7a9a35; --free:#222937; --on:#0b0e14; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0f1219; --sheet:#171c26; --ink:#e6e9f0; --muted:#9aa4b6; --rule:#2a3140;
+  --pen:#8fa6ff; --pen-soft:#1e2646; --hl:#ffcc33; --hl-soft:#3a3214;
+  --ok:#5fd39a; --ok-soft:#163325; --bad:#ff8a80; --bad-soft:#3a1c1a;
+  --c1:#27a693; --c2:#d98f2b; --c3:#4c7ff0; --c4:#a464e0; --c5:#dc5a93; --c6:#7a9a35; --free:#222937; --on:#0b0e14; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font:15.5px/1.6 var(--body);margin:0}
+.wrap{max-width:1040px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 80px;display:flex;flex-direction:column;gap:34px}
+h1{font:700 clamp(30px,5.2vw,48px)/1.04 var(--display);margin:0;text-wrap:balance}
+h2{font:700 26px/1.15 var(--display);margin:0;text-wrap:balance}
+h3{font:600 15px/1.3 var(--body);margin:0}
+p{margin:0;max-width:68ch}
+.eyebrow{font:500 12px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.lead{color:var(--muted)}
+.stack{display:flex;flex-direction:column;gap:12px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+section{display:flex;flex-direction:column;gap:16px}
+.btn{font:500 14px/1 var(--body);border-radius:999px;padding:10px 15px;border:1px solid var(--pen);background:var(--pen);color:var(--sheet);cursor:pointer}
+.btn.ghost{background:var(--sheet);color:var(--pen)}
+.btn.warn{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
+.btn:disabled{opacity:.38;cursor:default}
+.btn:focus-visible,select:focus-visible,.tok:focus-visible,.tab:focus-visible{outline:2px solid var(--pen);outline-offset:2px}
+select{font:inherit;font-size:14px;padding:8px 10px;border-radius:999px;border:1px solid var(--rule);background:var(--sheet);color:var(--ink)}
+code{font:500 .9em var(--mono);background:var(--pen-soft);padding:1px 5px;border-radius:4px}
+.panel{background:var(--sheet);border:1px solid var(--rule);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.narr{background:var(--ink);color:var(--paper);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.narr .eyebrow{color:var(--hl)}
+.narr p{max-width:none}
+.narr b{color:var(--hl)}
+.ok{color:var(--ok)} .bad{color:var(--bad)}
+.msg-ok{border:1px solid var(--ok);background:var(--ok-soft);color:var(--ok);border-radius:10px;padding:10px 12px;font-weight:500}
+.msg-bad{border:1px solid var(--bad);background:var(--bad-soft);color:var(--bad);border-radius:10px;padding:10px 12px;font-weight:500}
+.key{background:var(--pen-soft);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.key b{color:var(--pen)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{font:600 13.5px/1 var(--body);padding:9px 12px;border-radius:10px;border:1px solid var(--rule);background:var(--sheet);color:var(--muted);cursor:pointer}
+.tab[aria-pressed="true"]{background:var(--pen);border-color:var(--pen);color:var(--sheet)}
+
+/* 1 BCP */
+.g2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:12px}
+@media (max-width:760px){.g2{grid-template-columns:minmax(0,1fr)}}
+.cpu{border:2px solid var(--ink);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:8px;background:var(--sheet)}
+.cpu .chip{font:700 18px/1 var(--display)}
+.regs{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font:500 14px/1.4 var(--mono)}
+.regs dt{color:var(--muted)} .regs dd{margin:0}
+.regs dd.flash{background:var(--hl-soft);border-radius:4px}
+.pcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.pcard{border:1px solid var(--rule);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;background:var(--paper)}
+.pcard.run{border:2px solid var(--hl);box-shadow:0 0 0 3px var(--hl-soft)}
+.pcard.dead{opacity:.5}
+.pcard .t{display:flex;justify-content:space-between;align-items:center;gap:6px}
+.pcard .t b{font:700 16px/1 var(--display)}
+.pill{font:600 11px/1 var(--mono);text-transform:uppercase;letter-spacing:.05em;border-radius:99px;padding:5px 8px;background:var(--free);color:var(--muted)}
+.pill.run{background:var(--hl);color:#1a1400}
+.pill.ready{background:var(--pen-soft);color:var(--pen)}
+.pill.done{background:var(--ok-soft);color:var(--ok)}
+.bcp{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font-size:12.5px}
+.bcp dt{color:var(--muted)} .bcp dd{margin:0;font:500 12.5px/1.4 var(--mono)}
+.bcp dd.flash{background:var(--hl-soft);border-radius:4px}
+.steplist{margin:0;padding-left:20px;font-size:14px;display:flex;flex-direction:column;gap:3px}
+
+/* 2 estados */
+.sgrid{display:grid;grid-template-columns:1fr auto 1fr auto 1fr auto 1fr;gap:8px;align-items:stretch}
+.state{border:1.5px solid var(--rule);border-radius:12px;padding:10px;background:var(--sheet);min-height:96px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.state h3{font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.state.cpu-s{border-color:var(--hl);background:var(--hl-soft)}
+.state .toks{display:flex;flex-wrap:wrap;gap:6px}
+.arr{display:flex;align-items:center;justify-content:center;color:var(--muted);font:600 18px/1 var(--mono)}
+.blkrow{grid-column:3/6}
+.tok{font:700 15px/1 var(--display);border:0;border-radius:10px;padding:9px 12px;cursor:pointer;color:var(--on)}
+.tok[aria-pressed="true"]{outline:3px solid var(--ink);outline-offset:2px}
+@media (max-width:700px){.sgrid{grid-template-columns:minmax(0,1fr)}.arr{transform:rotate(90deg);height:18px}.blkrow{grid-column:auto}}
+.evs{display:flex;flex-wrap:wrap;gap:6px}
+.log{font:13px/1.6 var(--mono);color:var(--muted);max-height:170px;overflow:auto;background:var(--paper);border-radius:10px;padding:8px 12px}
+
+/* 3 planificación */
+.top3{display:grid;grid-template-columns:auto minmax(0,1fr) minmax(0,2fr);gap:10px}
+@media (max-width:760px){.top3{grid-template-columns:minmax(0,1fr)}}
+.clock{border:2px solid var(--ink);border-radius:14px;padding:10px 16px;display:flex;flex-direction:column;justify-content:center;align-items:center;background:var(--sheet)}
+.clock b{font:700 40px/1 var(--display);font-variant-numeric:tabular-nums}
+.box{border:1px solid var(--rule);border-radius:12px;padding:10px 12px;background:var(--sheet);display:flex;flex-direction:column;gap:8px;min-width:0}
+.box .lab{font:600 12px/1 var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.cpuslot{min-height:46px;border-radius:10px;border:2px dashed var(--rule);display:flex;align-items:center;justify-content:center;font:700 22px/1 var(--display)}
+.cpuslot.busy{border:0;color:var(--on)}
+.queue{display:flex;gap:6px;flex-wrap:wrap;min-height:46px;align-items:center}
+.qi{border-radius:10px;padding:6px 10px;color:var(--on);display:flex;flex-direction:column;gap:2px;font:700 16px/1 var(--display)}
+.qi small{font:500 10.5px/1 var(--mono);opacity:.9}
+.gantt{overflow-x:auto;background:var(--sheet);border:1px solid var(--rule);border-radius:12px;padding:10px}
+.grow{display:grid;grid-template-columns:30px repeat(var(--cols),minmax(22px,1fr));min-width:calc(30px + var(--cols)*24px)}
+.grow div{height:26px;display:flex;align-items:center;justify-content:center;font:500 11.5px/1 var(--mono);border-left:1px solid var(--rule)}
+.grow .lbl{justify-content:flex-start;border-left:0;font-weight:600;color:var(--muted)}
+.grow .run{color:var(--on);font-weight:700}
+.grow .wait{background:repeating-linear-gradient(135deg,var(--bad-soft) 0 4px,transparent 4px 8px);color:var(--bad)}
+.grow .now{box-shadow:inset 0 0 0 2px var(--hl)}
+.axis div{border-left:0;color:var(--muted);font-size:10.5px;justify-content:flex-start;height:16px}
+.arrv{color:var(--pen);font-weight:700}
+.tbl{overflow-x:auto;border:1px solid var(--rule);border-radius:12px;background:var(--sheet)}
+table{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums}
+th,td{padding:7px 10px;border-bottom:1px solid var(--rule);text-align:left;white-space:nowrap}
+th{font:600 11px/1.2 var(--body);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:var(--paper)}
+tr:last-child td{border-bottom:0}
+td.mono{font-family:var(--mono)}
+td .f{color:var(--muted);font-size:11.5px;font-family:var(--mono)}
+.live{font-weight:700;color:var(--bad)}
+.legend{font-size:12.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:14px}
+.sw{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:5px}
+
+/* 4 carrera */
+.race{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:10px;align-items:stretch}
+@media (max-width:700px){.race{grid-template-columns:minmax(0,1fr)}}
+.proc{border:1px solid var(--rule);border-radius:12px;padding:12px 14px;background:var(--sheet);display:flex;flex-direction:column;gap:6px}
+.proc.act{border:2px solid var(--hl);box-shadow:0 0 0 3px var(--hl-soft)}
+.proc.blk{border:2px dashed var(--bad)}
+.proc ol{margin:0;padding-left:20px;font:13px/1.7 var(--mono)}
+.proc li.cur{background:var(--hl-soft);border-radius:4px}
+.proc li.did{color:var(--muted);text-decoration:line-through}
+.bank{border:2px solid var(--ink);border-radius:14px;padding:12px 16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:var(--sheet);min-width:170px}
+.bank b{font:700 34px/1 var(--display);font-variant-numeric:tabular-nums}
+.lock{font:600 12px/1 var(--mono);border-radius:99px;padding:5px 9px;background:var(--free);color:var(--muted)}
+.lock.on{background:var(--bad-soft);color:var(--bad)}
+/* 5 prod-cons */
+.buf{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.slot{height:58px;border-radius:10px;border:2px dashed var(--rule);display:flex;align-items:center;justify-content:center;font:700 14px/1 var(--display);color:var(--muted)}
+.slot.full{border:0;background:var(--c2);color:var(--on)}
+.sems{display:flex;flex-wrap:wrap;gap:10px}
+.sem{border:1px solid var(--rule);border-radius:12px;padding:10px 14px;background:var(--sheet);display:flex;flex-direction:column;gap:2px}
+.sem b{font:700 26px/1 var(--display);font-variant-numeric:tabular-nums}
+.sem small{color:var(--muted);font-size:12px}
+.actors{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (max-width:600px){.actors{grid-template-columns:minmax(0,1fr)}}
+.actor{border:1px solid var(--rule);border-radius:12px;padding:12px 14px;background:var(--sheet);display:flex;flex-direction:column;gap:8px}
+.actor.sleep{border:2px dashed var(--bad);background:var(--bad-soft)}
+/* repaso */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
+details.card{background:var(--sheet);border:1px solid var(--rule);border-radius:12px;padding:12px 14px}
+details.card summary{cursor:pointer;font-weight:600;list-style:none;display:flex;justify-content:space-between;gap:10px}
+details.card summary::after{content:"ver";font:500 12px/1.6 var(--mono);color:var(--pen)}
+details.card[open] summary::after{content:"ocultar"}
+details.card p{margin-top:8px;font-size:14.5px}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+<header class="stack" style="gap:10px">
+  <span class="eyebrow">Sistemas Operativos · Unidad 8 · Procesos</span>
+  <h1>Procesos por dentro</h1>
+  <p class="lead">Abrí procesos, cambialos de estado, mirá al planificador decidir segundo a segundo y rompé (y arreglá) una cuenta bancaria compartida. Cada sección es un tema del desarrollo.</p>
+</header>
+
+<!-- 1 -->
+<section>
+  <h2>1. Programa, proceso y BCP</h2>
+  <p>Un <b>programa</b> es un archivo en el disco. Cuando lo abrís, el SO crea un <b>proceso</b>, con su PID y su <b>BCP</b> (su ficha). Abrí el mismo programa dos veces y vas a ver dos procesos distintos. Después probá el <b>cambio de contexto</b>.</p>
+  <div class="row">
+    <button class="btn" id="b-chrome">Abrir chrome (programa en disco)</button>
+    <button class="btn" id="b-spot">Abrir spotify</button>
+    <button class="btn ghost" id="b-run">Ejecutar 1 instrucción</button>
+    <button class="btn ghost" id="b-ctx">Cambio de contexto →</button>
+    <button class="btn ghost" id="b-kill">Terminar el que corre</button>
+    <button class="btn ghost" id="b-r1">Reiniciar</button>
+  </div>
+  <div class="narr" id="n1" aria-live="polite"></div>
+  <div class="g2">
+    <div class="cpu"><span class="eyebrow">CPU (una sola)</span><span class="chip" id="cpuname">libre</span><dl class="regs" id="cpuregs"></dl></div>
+    <div class="pcards" id="pcards"></div>
+  </div>
+</section>
+
+<!-- 2 -->
+<section>
+  <h2>2. Los 5 estados</h2>
+  <p>Tocá un proceso (A, B o C) y después un evento. Solo se habilitan los eventos posibles desde su estado actual. Probá también el botón rojo para ver la trampa típica.</p>
+  <div class="sgrid" id="sgrid">
+    <div class="state" id="st-nuevo"><h3>Nuevo</h3><div class="toks"></div></div>
+    <div class="arr">→</div>
+    <div class="state" id="st-listo"><h3>Listo</h3><div class="toks"></div></div>
+    <div class="arr">⇄</div>
+    <div class="state cpu-s" id="st-ejec"><h3>Ejecución (CPU)</h3><div class="toks"></div></div>
+    <div class="arr">→</div>
+    <div class="state" id="st-term"><h3>Terminado</h3><div class="toks"></div></div>
+    <div class="state blkrow" id="st-bloq"><h3>Bloqueado · esperando E/S</h3><div class="toks"></div></div>
+  </div>
+  <div class="evs" id="evs"></div>
+  <div id="smsg"></div>
+  <div class="log" id="slog" aria-live="polite"></div>
+</section>
+
+<!-- 3 -->
+<section>
+  <h2>3. El planificador, segundo a segundo</h2>
+  <p>Elegí un algoritmo y avanzá el reloj. Vas a ver quién usa la CPU, la <b>cola de listos</b> en el orden en que los elige el algoritmo, y la <b>espera de cada proceso contándose en vivo</b>: cada segundo que pasa en la cola le suma 1. Al final, esa cuenta coincide con la columna Espera.</p>
+  <div class="tabs" id="algs"></div>
+  <div class="row">
+    <label for="dset" class="lead" style="font-size:14px">Datos:</label>
+    <select id="dset"><option value="mini">Ejemplo chico (3 procesos)</option><option value="parcial">Parcial del año pasado (6 procesos)</option><option value="rand">Al azar</option></select>
+    <button class="btn ghost" id="t-back">◀ t − 1</button>
+    <button class="btn" id="t-next">Avanzar 1 segundo ▶</button>
+    <button class="btn ghost" id="t-end">Hasta el final ▶▶</button>
+    <button class="btn ghost" id="t-reset">Volver a t = 0</button>
+  </div>
+  <div class="top3">
+    <div class="clock"><span class="eyebrow">Reloj</span><b id="clk">0</b></div>
+    <div class="box"><span class="lab">En la CPU</span><div class="cpuslot" id="cpuslot">—</div></div>
+    <div class="box"><span class="lab" id="qlab">Cola de listos</span><div class="queue" id="queue"></div></div>
+  </div>
+  <div class="narr" id="n3" aria-live="polite"></div>
+  <div class="gantt" id="gantt"></div>
+  <div class="legend"><span><i class="sw" style="background:var(--c3)"></i>usando la CPU</span><span><i class="sw" style="background:repeating-linear-gradient(135deg,var(--bad-soft) 0 3px,transparent 3px 6px);border:1px solid var(--bad)"></i>esperando en la cola (suma espera)</span><span class="arrv">▲ llega</span></div>
+  <div class="tbl" id="ptable"></div>
+</section>
+
+<!-- 4 -->
+<section>
+  <h2>4. Condición de carrera</h2>
+  <p>La cuenta compartida tiene <b>$100</b>. Dos procesos depositan <b>$50</b> cada uno, así que el saldo final debería ser <b>$200</b>. Cada depósito son 3 pasos: leer el saldo, sumarle 50 y escribirlo. El SO puede cambiar de proceso <b>en cualquier momento</b>. Avanzá paso a paso.</p>
+  <div class="tabs" id="rmode"><button class="tab" data-m="sin" id="r-sin">Sin protección</button><button class="tab" data-m="con" id="r-con">Con exclusión mutua (semáforo mutex)</button></div>
+  <div class="row"><button class="btn" id="r-next">Siguiente paso ▶</button><button class="btn ghost" id="r-reset">Reiniciar</button></div>
+  <div class="narr" id="n4" aria-live="polite"></div>
+  <div class="race">
+    <div class="proc" id="pA"></div>
+    <div class="bank"><span class="eyebrow">Saldo en memoria compartida</span><b id="saldo">$100</b><span class="lock" id="lock">región crítica libre</span></div>
+    <div class="proc" id="pB"></div>
+  </div>
+  <div id="rmsg"></div>
+</section>
+
+<!-- 5 -->
+<section>
+  <h2>5. Productor–consumidor con semáforos</h2>
+  <p>Un panadero (el <b>productor</b>) pone panes en un estante de 5 lugares (el <b>búfer</b>) y un cliente (el <b>consumidor</b>) los saca. Dos semáforos cuentan: <b>vacíos</b> (lugares libres) y <b>llenos</b> (panes). <code>down</code> resta 1, y si el semáforo está en 0 el proceso se <b>duerme</b>. <code>up</code> suma 1 y <b>despierta</b> al que esté dormido. Probá llenar el estante y después vaciarlo.</p>
+  <div class="row"><button class="btn" id="pc-p">Productor: producir un pan</button><button class="btn" id="pc-c">Consumidor: consumir un pan</button><button class="btn ghost" id="pc-r">Reiniciar</button></div>
+  <div class="buf" id="buf"></div>
+  <div class="sems" id="sems"></div>
+  <div class="actors"><div class="actor" id="aprod"></div><div class="actor" id="acons"></div></div>
+  <div class="narr" id="n5" aria-live="polite"></div>
+</section>
+
+<!-- repaso -->
+<section>
+  <h2>Repaso rápido</h2>
+  <div class="cards">
+    <details class="card"><summary>¿Qué es un proceso?</summary><p>Un <b>programa en ejecución</b>: tiene su propia memoria, un estado y recursos asignados. Se identifica con un PID.</p></details>
+    <details class="card"><summary>¿Para qué sirve el BCP?</summary><p>Para guardar todo lo necesario para <b>pausar un proceso y retomarlo</b> sin perder nada (PID, estado, prioridad, contador de programa, registros, memoria, E/S y contabilidad). Es la base de la multiprogramación.</p></details>
+    <details class="card"><summary>¿Qué es el cambio de contexto?</summary><p>Guardar el contexto del proceso que estaba en la CPU en su BCP y cargar el del siguiente desde el suyo.</p></details>
+    <details class="card"><summary>¿Bloqueado → Ejecución existe?</summary><p><b>No.</b> Cuando termina la E/S, el proceso pasa a <b>Listo</b> y espera su turno.</p></details>
+    <details class="card"><summary>Retorno y espera</summary><p><b>Retorno = Fin − Llegada</b> (todo el tiempo en el sistema). <b>Espera = Retorno − CPU</b> (el tiempo en la cola).</p></details>
+    <details class="card"><summary>¿Qué significa expropiativo?</summary><p>Que el SO puede <b>quitarle la CPU</b> a un proceso antes de que termine (porque se venció el quantum o porque llegó uno más prioritario).</p></details>
+    <details class="card"><summary>¿Qué es una condición de carrera?</summary><p>Dos procesos usan un dato compartido al mismo tiempo y <b>el resultado depende del orden</b> (los $150 en lugar de $200).</p></details>
+    <details class="card"><summary>Las 4 condiciones de la exclusión mutua</summary><p>1) Uno solo a la vez en la región crítica. 2) No suponer velocidades ni cantidad de CPUs. 3) Un proceso fuera de la RC no bloquea a otros. 4) Nadie espera para siempre.</p></details>
+    <details class="card"><summary>Peterson, TSL y semáforos</summary><p><b>Peterson:</b> solo 2 procesos, con espera activa. <b>TSL:</b> instrucción atómica, también con espera activa. <b>Semáforos (Dijkstra):</b> down y up atómicos; el que espera se duerme y no gasta CPU.</p></details>
+    <details class="card"><summary>¿Qué falla con sleep/wakeup?</summary><p>Se puede <b>perder una señal de despertar</b> si llega justo antes de que el otro se duerma. Los semáforos la cuentan y no la pierden.</p></details>
+  </div>
+</section>
+</div>
+
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'})[c]);
+const COL=['--c1','--c2','--c3','--c4','--c5','--c6'];
+
+/* ============ 1. BCP ============ */
+let P1;
+function r1init(){P1={procs:[],run:-1,pid:1040,msg:'Todavía no hay procesos. Tocá <b>Abrir chrome</b>: el SO va a leer el programa del disco y crear un proceso.',steps:null,flash:''};}
+const PROG={chrome:{mem:'0x4000–0x7FFF',io:'red, pantalla'},spotify:{mem:'0x8000–0xBFFF',io:'parlantes, red'}};
+function r1render(){
+  const p=P1, cur=p.procs[p.run];
+  $('n1').innerHTML=`<span class="eyebrow">Qué pasó</span><p>${p.msg}</p>${p.steps?`<ol class="steplist">${p.steps.map(s=>`<li>${s}</li>`).join('')}</ol>`:''}`;
+  $('cpuname').textContent=cur?`${cur.prog} · PID ${cur.pid}`:'libre';
+  $('cpuname').style.color=cur?`var(${cur.c})`:'';
+  $('cpuregs').innerHTML=cur?`<dt>PC</dt><dd class="${p.flash==='cpu'?'flash':''}">${cur.pc}</dd><dt>AX</dt><dd class="${p.flash==='cpu'?'flash':''}">${cur.ax}</dd>`:'<dt>PC</dt><dd>—</dd><dt>AX</dt><dd>—</dd>';
+  $('pcards').innerHTML=p.procs.map((x,i)=>{const st=x.st, pill=st==='Ejecución'?'run':st==='Listo'?'ready':st==='Terminado'?'done':'';
+    const fl=p.flash==='bcp'+i;
+    return `<div class="pcard ${i===p.run?'run':''} ${st==='Terminado'?'dead':''}"><div class="t"><b style="color:var(${x.c})">${x.prog}</b><span class="pill ${pill}">${st}</span></div>
+     <dl class="bcp"><dt>PID</dt><dd>${x.pid}</dd><dt>Estado</dt><dd class="${fl?'flash':''}">${st}</dd><dt>Prioridad</dt><dd>${x.prio}</dd><dt>Contador de prog.</dt><dd class="${fl?'flash':''}">${i===p.run?'(en la CPU)':x.pc}</dd><dt>Registros</dt><dd class="${fl?'flash':''}">${i===p.run?'(en la CPU)':'AX='+x.ax}</dd><dt>Memoria</dt><dd>${x.mem}</dd><dt>E/S</dt><dd>${x.io}</dd><dt>Tiempo de CPU</dt><dd>${x.cpu} ms</dd></dl></div>`;}).join('')||'<p class="lead">Acá van a aparecer los BCP de los procesos que abras.</p>';
+  const alive=p.procs.filter(x=>x.st!=='Terminado');
+  $('b-run').disabled=!cur; $('b-kill').disabled=!cur; $('b-ctx').disabled=alive.length<2;
+  $('b-chrome').disabled=$('b-spot').disabled=p.procs.length>=4;
+}
+function open1(prog){const p=P1; const pid=p.pid++; const x={prog,pid,st:'Listo',prio:prog==='chrome'?2:3,pc:'0x0100',ax:0,cpu:0,mem:PROG[prog].mem,io:PROG[prog].io,c:COL[p.procs.length%6]};
+  p.procs.push(x); const same=p.procs.filter(y=>y.prog===prog).length;
+  p.steps=['El SO lee <code>'+prog+'</code> del disco (el programa: un archivo quieto).','Le reserva memoria propia ('+x.mem+') y le asigna el <b>PID '+pid+'</b>.','Crea su <b>BCP</b>, la ficha de abajo, y lo pone en estado <b>Listo</b>.'];
+  p.msg=`Se creó un proceso nuevo de <b>${prog}</b>.${same>1?` Fijate: es el <b>mismo programa</b>, pero son <b>${same} procesos distintos</b>, cada uno con su PID y su BCP.`:''}`;
+  if(p.run<0){p.run=p.procs.length-1; x.st='Ejecución'; p.steps.push('Como la CPU estaba libre, el planificador lo pone en <b>Ejecución</b>.');}
+  p.flash=''; r1render();}
+$('b-chrome').onclick=()=>open1('chrome'); $('b-spot').onclick=()=>open1('spotify');
+$('b-run').onclick=()=>{const p=P1,x=p.procs[p.run]; const n=parseInt(x.pc,16)+4; x.pc='0x'+n.toString(16).toUpperCase().padStart(4,'0'); x.ax+=7; x.cpu+=10;
+  p.msg=`<b>${x.prog}</b> ejecutó una instrucción: el <b>contador de programa</b> avanzó a ${x.pc} (la <b>próxima</b> instrucción) y cambió el registro AX. Mientras corre, estos valores viven <b>en la CPU</b>, no en el BCP.`; p.steps=null; p.flash='cpu'; r1render();};
+$('b-ctx').onclick=()=>{const p=P1, a=p.procs[p.run]; const alive=p.procs.map((x,i)=>i).filter(i=>p.procs[i].st!=='Terminado'&&i!==p.run);
+  const ni=alive.find(i=>i>p.run)??alive[0], b=p.procs[ni];
+  p.steps=[`Se <b>guarda</b> el contexto de ${a.prog} (PC=${a.pc}, AX=${a.ax}) en <b>su BCP</b>.`,`${a.prog} pasa a <b>Listo</b>.`,`Se <b>carga</b> el contexto de ${b.prog} desde su BCP (PC=${b.pc}, AX=${b.ax}) en la CPU.`,`${b.prog} pasa a <b>Ejecución</b> y sigue exactamente donde había quedado.`];
+  a.st='Listo'; b.st='Ejecución'; p.run=ni;
+  p.msg=`<b>Cambio de contexto</b> de ${a.prog} (PID ${a.pid}) a ${b.prog} (PID ${b.pid}). Esto es lo que hace posible la <b>multiprogramación</b>: gracias al BCP, ${a.prog} va a poder volver sin perder nada.`; p.flash='bcp'+p.procs.indexOf(a); r1render();};
+$('b-kill').onclick=()=>{const p=P1,x=p.procs[p.run]; x.st='Terminado'; const nx=p.procs.findIndex(y=>y.st==='Listo');
+  p.steps=[`${x.prog} termina (fin normal). Se liberan su memoria y su BCP.`].concat(nx>=0?[`El planificador elige a ${p.procs[nx].prog}, que estaba en Listo.`]:[]);
+  p.run=nx; if(nx>=0) p.procs[nx].st='Ejecución'; p.msg=`<b>${x.prog}</b> pasó a <b>Terminado</b>.`; p.flash=''; r1render();};
+$('b-r1').onclick=()=>{r1init();r1render();};
+r1init(); r1render();
+
+/* ============ 2. estados ============ */
+let S2;
+function s2init(){S2={st:{A:'nuevo',B:'nuevo',C:'nuevo'},sel:'A',log:[],msg:''};}
+const SN={nuevo:'Nuevo',listo:'Listo',ejec:'Ejecución',bloq:'Bloqueado',term:'Terminado'};
+const EV=[
+  {id:'adm',l:'Admitir',from:'nuevo',to:'listo',why:'<b>Admisión</b>: el SO lo acepta y queda esperando la CPU.'},
+  {id:'plan',l:'Planificar (darle la CPU)',from:'listo',to:'ejec',why:'<b>Planificación</b>: el planificador lo elige y le da la CPU.'},
+  {id:'io',l:'Pide E/S (leer el disco)',from:'ejec',to:'bloq',why:'Pidió una E/S: hasta que no llegue el dato, <b>aunque tuviera la CPU no podría avanzar</b>. Libera la CPU.'},
+  {id:'ioend',l:'Terminó la E/S',from:'bloq',to:'listo',why:'Llegó lo que esperaba. Vuelve a <b>Listo</b> a esperar su turno.'},
+  {id:'q',l:'Se le venció el quantum',from:'ejec',to:'listo',why:'<b>Expropiación</b>: se le terminó el tiempo (o llegó uno más prioritario). Vuelve a Listo.'},
+  {id:'fin',l:'Termina',from:'ejec',to:'term',why:'Terminó. Se liberan sus recursos.'},
+];
+function s2render(){
+  ['nuevo','listo','ejec','bloq','term'].forEach(k=>{const box=$('st-'+({nuevo:'nuevo',listo:'listo',ejec:'ejec',bloq:'bloq',term:'term'})[k]).querySelector('.toks');
+    box.innerHTML=Object.keys(S2.st).filter(n=>S2.st[n]===k).map(n=>`<button class="tok" data-n="${n}" aria-pressed="${S2.sel===n}" style="background:var(${COL['ABC'.indexOf(n)+2]})">${n}</button>`).join('');});
+  document.querySelectorAll('.tok').forEach(b=>b.onclick=()=>{S2.sel=b.dataset.n;S2.msg='';s2render();});
+  const cur=S2.st[S2.sel], busy=Object.values(S2.st).includes('ejec');
+  $('evs').innerHTML=`<span class="lead" style="font-size:14px;align-self:center">Proceso <b>${S2.sel}</b> (${SN[cur]}):</span>`+EV.map(e=>`<button class="btn ${e.from===cur?'':'ghost'}" data-e="${e.id}" ${e.from===cur?'':'disabled'}>${e.l}</button>`).join('')+`<button class="btn warn" data-e="trap" ${cur==='bloq'?'':'disabled'}>¿Bloqueado → Ejecución directo?</button>`;
+  $('evs').querySelectorAll('[data-e]').forEach(b=>b.onclick=()=>s2ev(b.dataset.e));
+  $('smsg').innerHTML=S2.msg;
+  $('slog').innerHTML=S2.log.length?S2.log.map(esc).join('<br>'):'Historial de transiciones: todavía vacío. Empezá admitiendo a A.';
+  $('slog').scrollTop=1e6;
+}
+function s2ev(id){
+  const n=S2.sel, cur=S2.st[n];
+  if(id==='trap'){S2.msg='<div class="msg-bad">✗ <b>Esa transición no existe.</b> Cuando termina la E/S, el proceso <b>no vuelve directo a la CPU</b>: pasa a <b>Listo</b> y espera que el planificador lo elija. Es la trampa más preguntada.</div>'; s2render(); return;}
+  const e=EV.find(x=>x.id===id);
+  if(id==='plan'){const other=Object.keys(S2.st).find(k=>S2.st[k]==='ejec'); if(other){S2.msg=`<div class="msg-bad">La CPU está ocupada por <b>${other}</b>. Con una sola CPU hay <b>un solo proceso en Ejecución</b> a la vez. Primero ${other} tiene que salir (E/S, quantum o fin).</div>`; s2render(); return;}}
+  S2.st[n]=e.to; S2.log.push(`${n}: ${SN[e.from]} → ${SN[e.to]}  (${e.l})`); S2.msg=`<div class="msg-ok">${n}: ${SN[e.from]} → <b>${SN[e.to]}</b>. ${e.why}</div>`; s2render();
+}
+s2init(); s2render();
+
+/* ============ 3. planificación ============ */
+const ALGS=[['FCFS','FCFS'],['SJF','SJF'],['SRTF','SRTF'],['RR','Round Robin q=2'],['PE','Prioridad expropiativa'],['PN','Prioridad no expropiativa']];
+const DATA={mini:[['A',0,4,2],['B',1,2,1],['C',2,1,3]],parcial:[['A',0,3,2],['B',1,2,3],['C',2,5,0],['D',5,3,5],['E',7,5,3],['F',8,3,4]]};
+let ALG='FCFS', PS=[], TL=[], T=0;
+const isPrio=()=>ALG==='PE'||ALG==='PN';
+function mkRand(){const n=4+Math.floor(Math.random()*2); let a=0; const pr=[0,1,2,3,4,5].sort(()=>Math.random()-.5); return 'ABCDE'.slice(0,n).split('').map((x,i)=>{if(i)a+=Math.floor(Math.random()*3);return [x,a,1+Math.floor(Math.random()*5),pr[i]];});}
+function simulate(){
+  const n=PS.length, rem=PS.map(p=>p.c), waited=PS.map(()=>0), used=PS.map(()=>0); let cur=-1, qc=0, t=0, done=0; const ready=[]; const ticks=[]; const fin=PS.map(()=>null);
+  const key=i=>ALG==='FCFS'||ALG==='RR'?[PS[i].a,i]:ALG==='SJF'?[PS[i].c,PS[i].a,i]:ALG==='SRTF'?[rem[i],PS[i].a,i]:[PS[i].p,PS[i].a,i];
+  const cmp=(x,y)=>{const a=key(x),b=key(y);for(let k=0;k<a.length;k++){if(a[k]!==b[k])return a[k]-b[k];}return 0;};
+  const crit=i=>ALG==='FCFS'?`llegó primero (t=${PS[i].a})`:ALG==='SJF'?`es el más corto (CPU ${PS[i].c})`:ALG==='SRTF'?`le queda menos (${rem[i]})`:ALG==='RR'?'es el primero de la cola':`tiene la mejor prioridad (${PS[i].p})`;
+  let guard=0;
+  while(done<n&&guard++<200){
+    const ev=[];
+    PS.forEach((p,i)=>{if(p.a===t){ready.push(i); ev.push(`llega <b>${p.n}</b>${isPrio()?` (prioridad ${p.p})`:''}${ALG==='SJF'||ALG==='SRTF'?` (CPU ${p.c})`:''}`);}});
+    if(ALG==='RR'&&cur>=0&&qc===2){ready.push(cur); ev.push(`a <b>${PS[cur].n}</b> se le venció el quantum (2): vuelve al final de la cola`); cur=-1; qc=0;}
+    const pre=ALG==='SRTF'||ALG==='PE';
+    if(pre&&cur>=0&&ready.length){const best=ready.slice().sort(cmp)[0]; if(cmp(best,cur)<0){ev.push(`<b>${PS[best].n}</b> desaloja a <b>${PS[cur].n}</b>: ${ALG==='PE'?`prioridad ${PS[best].p} es mejor que ${PS[cur].p}`:`le queda ${rem[best]}, menos que ${rem[cur]}`}. ${PS[cur].n} vuelve a la cola con ${rem[cur]} pendientes`); ready.push(cur); cur=-1; qc=0;}}
+    if(cur<0&&ready.length){let pick;
+      if(ALG==='RR') pick=ready[0]; else pick=ready.slice().sort(cmp)[0];
+      ready.splice(ready.indexOf(pick),1);
+      const tie=ALG!=='RR'&&ready.find(j=>{const a=key(pick),b=key(j);return a[0]===b[0];});
+      ev.push(`entra <b>${PS[pick].n}</b> a la CPU: ${crit(pick)}${tie!==undefined&&tie!==false?` (empata con ${PS[tie].n}, gana por llegar antes)`:''}`); cur=pick; qc=0;}
+    const order=ALG==='RR'?ready.slice():ready.slice().sort(cmp);
+    ready.forEach(i=>waited[i]++);
+    if(cur>=0){rem[cur]--; used[cur]++; qc++;}
+    ticks.push({t,run:cur,ready:order,ev,rem:rem.slice(),waited:waited.slice(),used:used.slice()});
+    t++;
+    if(cur>=0&&rem[cur]===0){fin[cur]=t; done++; ticks[ticks.length-1].ev.push(`<b>${PS[cur].n}</b> termina en t=${t}`); cur=-1; qc=0;}
+  }
+  return {ticks,fin};
+}
+let SIM;
+function loadData(){const d=$('dset').value; const raw=d==='rand'?mkRand():DATA[d]; PS=raw.map(([n,a,c,p],i)=>({n,a,c,p,col:COL[i%6]})); SIM=simulate(); T=0; render3();}
+function render3(){
+  $('algs').innerHTML=ALGS.map(([k,l])=>`<button class="tab" data-a="${k}" aria-pressed="${k===ALG}">${l}</button>`).join('');
+  $('algs').querySelectorAll('.tab').forEach(b=>b.onclick=()=>{ALG=b.dataset.a; SIM=simulate(); T=0; render3();});
+  const tk=SIM.ticks, total=tk.length, k=T-1, cur=k>=0?tk[k]:null;
+  $('clk').textContent=T;
+  const slot=$('cpuslot');
+  if(cur&&cur.run>=0){const p=PS[cur.run]; slot.className='cpuslot busy'; slot.style.background=`var(${p.col})`; slot.textContent=p.n;} else {slot.className='cpuslot'; slot.style.background=''; slot.textContent=cur?'libre':'—';}
+  const lab={FCFS:'Cola · ordenada por llegada',SJF:'Cola · el más corto primero',SRTF:'Cola · menos tiempo restante primero',RR:'Cola · en orden de turno',PE:'Cola · mejor prioridad primero (número más chico)',PN:'Cola · mejor prioridad primero (número más chico)'}[ALG];
+  $('qlab').textContent=lab;
+  $('queue').innerHTML=cur&&cur.ready.length?cur.ready.map(i=>{const p=PS[i]; const extra=ALG==='SJF'?`CPU ${p.c}`:ALG==='SRTF'?`quedan ${cur.rem[i]}`:isPrio()?`prio ${p.p}`:`llegó ${p.a}`; return `<div class="qi" style="background:var(${p.col})">${p.n}<small>${extra} · espera ${cur.waited[i]}</small></div>`;}).join(''):`<span class="lead" style="font-size:14px">${cur?'vacía':'—'}</span>`;
+  const head=isPrio()?' Convención: <b>número más chico = más prioridad</b>.':'';
+  if(!cur) $('n3').innerHTML=`<span class="eyebrow">t = 0 · antes de empezar</span><p>Algoritmo: <b>${ALGS.find(a=>a[0]===ALG)[1]}</b>.${head} Tocá <b>Avanzar 1 segundo</b> y el narrador te va a decir qué decide el SO y por qué.</p>`;
+  else $('n3').innerHTML=`<span class="eyebrow">Segundo ${cur.t} → ${cur.t+1}</span><p>${cur.ev.length?cur.ev.map(e=>'• '+e).join('<br>'):'• no pasa nada nuevo: el que está en la CPU sigue'}${cur.run>=0?`<br>• <b>${PS[cur.run].n}</b> usa la CPU este segundo`:'<br>• la CPU queda libre: no hay nadie listo'}${cur.ready.length?`<br>• esperan en la cola: ${cur.ready.map(i=>PS[i].n).join(', ')} (a cada uno se le suma 1 de espera)`:''}</p>`;
+  // gantt
+  const cols=Math.max(total,1);
+  let g='';
+  PS.forEach((p,i)=>{g+=`<div class="grow" style="--cols:${cols}"><div class="lbl">${p.n}</div>`;
+    for(let s=0;s<cols;s++){const x=tk[s]; let cls='',st='',txt='';
+      if(s<T&&x){ if(x.run===i){cls='run';st=`background:var(${p.col})`;txt=p.n;} else if(x.ready.includes(i)){cls='wait';txt='·';} }
+      if(s===T-1) cls+=' now';
+      g+=`<div class="${cls}" style="${st}">${txt}</div>`;}
+    g+='</div>';});
+  g+=`<div class="grow axis" style="--cols:${cols}"><div></div>${Array.from({length:cols},(_,s)=>{const ar=PS.filter(p=>p.a===s).map(p=>p.n).join('');return `<div>${s}${ar?` <span class="arrv">▲${ar}</span>`:''}</div>`;}).join('')}</div>`;
+  $('gantt').innerHTML=g;
+  // tabla
+  const rows=PS.map((p,i)=>{const f=SIM.fin[i], done=f!==null&&f<=T; const st=cur?(done?'terminado':cur.run===i?'ejecución':p.a<=cur.t?'listo':'no llegó'):'no llegó';
+    const w=cur?cur.waited[i]:0, u=cur?cur.used[i]:0;
+    const ret=done?f-p.a:null, esp=done?ret-p.c:null;
+    return `<tr><td><b style="color:var(${p.col})">${p.n}</b></td><td class="mono">${p.a}</td><td class="mono">${p.c}</td>${isPrio()?`<td class="mono">${p.p}</td>`:''}<td>${st}</td><td class="mono">${u}/${p.c}</td><td class="mono live">${w}</td>
+      <td class="mono">${done?f:'—'}</td><td class="mono">${done?`${ret} <span class="f">= ${f} − ${p.a}</span>`:'—'}</td><td class="mono">${done?`${esp} <span class="f">= ${ret} − ${p.c}</span>`:'—'}</td><td class="mono">${done?(ret/p.c).toFixed(2).replace('.',',')+` <span class="f">= ${ret} ÷ ${p.c}</span>`:'—'}</td></tr>`;}).join('');
+  const all=SIM.fin.every(f=>f!==null&&f<=T);
+  const avg=all?`<tr><td colspan="${isPrio()?7:6}"><b>Promedios</b></td><td></td><td class="mono"><b>${(PS.reduce((s,p,i)=>s+SIM.fin[i]-p.a,0)/PS.length).toFixed(2).replace('.',',')}</b></td><td class="mono"><b>${(PS.reduce((s,p,i)=>s+SIM.fin[i]-p.a-p.c,0)/PS.length).toFixed(2).replace('.',',')}</b></td><td></td></tr>`:'';
+  $('ptable').innerHTML=`<table><thead><tr><th>Proc.</th><th>Llegada</th><th>CPU</th>${isPrio()?'<th>Prio</th>':''}<th>Estado</th><th>Usó CPU</th><th>Espera (en vivo)</th><th>Finalización</th><th>Retorno = Fin − Llegada</th><th>Espera = Retorno − CPU</th><th>Normalizado</th></tr></thead><tbody>${rows}${avg}</tbody></table>`;
+  $('t-back').disabled=T===0; $('t-next').disabled=$('t-end').disabled=T>=total;
+  if(all&&T===total) $('n3').innerHTML+=`<p style="margin-top:6px">✓ <b>Terminaron todos.</b> Compará la columna <b>Espera (en vivo)</b> con <b>Espera = Retorno − CPU</b>: dan lo mismo. La espera es simplemente <b>los segundos que el proceso pasó en la cola</b>, los casilleros rayados del Gantt.</p>`;
+}
+$('t-next').onclick=()=>{if(T<SIM.ticks.length){T++;render3();}};
+$('t-back').onclick=()=>{if(T>0){T--;render3();}};
+$('t-end').onclick=()=>{T=SIM.ticks.length;render3();};
+$('t-reset').onclick=()=>{T=0;render3();};
+$('dset').onchange=loadData;
+loadData();
+
+/* ============ 4. carrera ============ */
+let R={mode:'sin'};
+const PLAN={sin:[['A',0],['B',0],['A',1],['A',2],['B',1],['B',2]],con:[['A','d'],['A',0],['B','d'],['A',1],['A',2],['A','u'],['B',0],['B',1],['B',2],['B','u']]};
+function rinit(){R={mode:R.mode,i:0,saldo:100,reg:{A:null,B:null},pc:{A:0,B:0},lock:null,blocked:null,msg:'Avanzá con <b>Siguiente paso</b>. El orden en que el SO alterna los procesos está marcado en cada paso.',end:''};}
+function rtext(p){const L=R.mode==='con'?['down(mutex): pedir la llave','leer saldo → registro','registro = registro + 50','escribir registro → saldo','up(mutex): devolver la llave']:['leer saldo → registro','registro = registro + 50','escribir registro → saldo'];return L;}
+function rrender(){
+  document.querySelectorAll('#rmode .tab').forEach(t=>t.setAttribute('aria-pressed',t.dataset.m===R.mode));
+  ['A','B'].forEach(p=>{const L=rtext(p), done=R.pc[p], act=R.i>0&&PLAN[R.mode][R.i-1][0]===p;
+    $('p'+p).className='proc'+(act?' act':'')+(R.blocked===p?' blk':'');
+    $('p'+p).innerHTML=`<h3>Proceso ${p} · deposita $50</h3><span class="lead" style="font-size:13px">Registro de ${p}: <b class="mono">${R.reg[p]===null?'—':'$'+R.reg[p]}</b>${R.blocked===p?' · <span class="bad">BLOQUEADO esperando la llave</span>':''}</span><ol>${L.map((l,k)=>`<li class="${k<done?'did':k===done&&act?'cur':''}">${l}</li>`).join('')}</ol>`;});
+  $('saldo').textContent='$'+R.saldo;
+  const lk=$('lock'); lk.className='lock'+(R.lock?' on':''); lk.textContent=R.mode==='con'?(R.lock?`región crítica ocupada por ${R.lock}`:'región crítica libre'):'sin protección';
+  $('n4').innerHTML=`<span class="eyebrow">${R.mode==='sin'?'Sin protección':'Con semáforo mutex'} · paso ${R.i} de ${PLAN[R.mode].length}</span><p>${R.msg}</p>`;
+  $('rmsg').innerHTML=R.end; $('r-next').disabled=R.i>=PLAN[R.mode].length;
+}
+$('r-next').onclick=()=>{
+  const [p,op]=PLAN[R.mode][R.i]; R.i++;
+  if(R.mode==='sin'){
+    if(op===0){R.reg[p]=R.saldo; R.msg=`<b>${p}</b> lee el saldo: <b>$${R.saldo}</b> (lo copia a su registro).${p==='B'&&R.reg.A!==null&&R.saldo===100?' <b>¡Ojo!</b> A todavía no escribió, así que B lee el valor <b>viejo</b>.':''}`;}
+    if(op===1){R.reg[p]+=50; R.msg=`<b>${p}</b> suma 50 en su registro: $${R.reg[p]}. El saldo en memoria <b>todavía no cambió</b>.`;}
+    if(op===2){R.saldo=R.reg[p]; R.msg=`<b>${p}</b> escribe <b>$${R.reg[p]}</b> en el saldo.${p==='B'?' Pisó lo que había escrito A con un valor calculado sobre datos viejos.':''}`;}
+  } else {
+    if(op==='d'){ if(R.lock&&R.lock!==p){R.blocked=p; R.msg=`<b>${p}</b> hace <b>down(mutex)</b>, pero la llave la tiene ${R.lock}: el semáforo está en 0, así que <b>${p} se bloquea</b> (se duerme sin gastar CPU). ${R.lock} sigue.`; R.i--; R.pc[p]=0; PLAN.con.splice(R.i,1); rrender(); return;}
+      R.lock=p; R.msg=`<b>${p}</b> hace <b>down(mutex)</b>: la región crítica estaba libre (1 → 0). Entra a la región crítica.`; R.pc[p]=1; rrender(); return;}
+    if(op==='u'){R.lock=null; R.msg=`<b>${p}</b> hace <b>up(mutex)</b>: devuelve la llave (0 → 1)${R.blocked&&R.blocked!==p?` y <b>despierta a ${R.blocked}</b>, que ahora puede entrar`:''}.`; R.pc[p]=5; if(R.blocked&&R.blocked!==p){R.lock=R.blocked; R.pc[R.blocked]=1; R.blocked=null;} rrender(); fin(); return;}
+    if(op===0){R.reg[p]=R.saldo; R.msg=`<b>${p}</b> lee el saldo: $${R.saldo}.`;}
+    if(op===1){R.reg[p]+=50; R.msg=`<b>${p}</b> suma 50: $${R.reg[p]}.`;}
+    if(op===2){R.saldo=R.reg[p]; R.msg=`<b>${p}</b> escribe $${R.reg[p]} en el saldo.`;}
+  }
+  R.pc[p]=(R.mode==='con'?op+2:op+1);
+  rrender(); fin();
+};
+function fin(){ if(R.i>=PLAN[R.mode].length){ R.end=R.saldo===200?`<div class="msg-ok">✓ Saldo final <b>$200</b>, el correcto. Con exclusión mutua, B tuvo que esperar a que A saliera de la región crítica: nunca hubo dos adentro a la vez.</div>`:`<div class="msg-bad">✗ Saldo final <b>$${R.saldo}</b> en lugar de $200: <b>se perdió un depósito</b>. Esto es una <b>condición de carrera</b>: el resultado dependió del orden en que se intercalaron A y B.</div>`; rrender(); } }
+function rreset(){PLAN.con=[['A','d'],['A',0],['B','d'],['A',1],['A',2],['A','u'],['B',0],['B',1],['B',2],['B','u']]; rinit(); rrender();}
+document.querySelectorAll('#rmode .tab').forEach(t=>t.onclick=()=>{R.mode=t.dataset.m; rreset();});
+$('r-reset').onclick=rreset;
+rreset();
+
+/* ============ 5. productor-consumidor ============ */
+let PC;
+function pcinit(){PC={buf:0,empty:5,full:0,psleep:false,csleep:false,msg:'El estante está vacío: <b>vacíos = 5</b>, <b>llenos = 0</b>. Probá <b>Consumir</b> primero y vas a ver qué pasa.'};}
+function pcrender(){
+  $('buf').innerHTML=Array.from({length:5},(_,i)=>`<div class="slot ${i<PC.buf?'full':''}">${i<PC.buf?'pan':'vacío'}</div>`).join('');
+  $('sems').innerHTML=`<div class="sem"><small>semáforo</small><span><b>${PC.empty}</b></span><small>vacíos (lugares libres)</small></div><div class="sem"><small>semáforo</small><span><b>${PC.full}</b></span><small>llenos (panes)</small></div>`;
+  $('aprod').className='actor'+(PC.psleep?' sleep':''); $('aprod').innerHTML=`<h3>Productor (panadero)</h3><p style="font-size:14px">${PC.psleep?'<b class="bad">DORMIDO</b> en down(vacíos): el estante está lleno.':'Para poner un pan: <code>down(vacíos)</code> → pone el pan → <code>up(llenos)</code>'}</p>`;
+  $('acons').className='actor'+(PC.csleep?' sleep':''); $('acons').innerHTML=`<h3>Consumidor (cliente)</h3><p style="font-size:14px">${PC.csleep?'<b class="bad">DORMIDO</b> en down(llenos): no hay panes.':'Para sacar un pan: <code>down(llenos)</code> → saca el pan → <code>up(vacíos)</code>'}</p>`;
+  $('n5').innerHTML=`<span class="eyebrow">Qué pasó</span><p>${PC.msg}</p>`;
+  $('pc-p').disabled=PC.psleep; $('pc-c').disabled=PC.csleep;
+}
+$('pc-p').onclick=()=>{
+  if(PC.empty===0){PC.psleep=true; PC.msg='El productor hace <b>down(vacíos)</b>, pero vacíos = <b>0</b>: el estante está lleno. <b>Se duerme</b> sin gastar CPU hasta que el consumidor libere un lugar.'; pcrender(); return;}
+  PC.empty--; PC.buf++; PC.full++; let w='';
+  if(PC.csleep){PC.csleep=false; PC.full--; PC.buf--; PC.empty++; w=' El <b>up(llenos)</b> <b>despierta al consumidor</b>, que estaba dormido, y se lleva el pan enseguida.';}
+  PC.msg=`Productor: <b>down(vacíos)</b> (un lugar libre menos), pone el pan y hace <b>up(llenos)</b> (un pan más).${w}`; pcrender();};
+$('pc-c').onclick=()=>{
+  if(PC.full===0){PC.csleep=true; PC.msg='El consumidor hace <b>down(llenos)</b>, pero llenos = <b>0</b>: no hay panes. <b>Se duerme.</b> Tocá Producir y mirá cómo el productor lo despierta.'; pcrender(); return;}
+  PC.full--; PC.buf--; PC.empty++; let w='';
+  if(PC.psleep){PC.psleep=false; PC.empty--; PC.buf++; PC.full++; w=' El <b>up(vacíos)</b> <b>despierta al productor</b>, que estaba dormido, y pone su pan en el lugar que se liberó.';}
+  PC.msg=`Consumidor: <b>down(llenos)</b>, saca un pan y hace <b>up(vacíos)</b>.${w} Como los semáforos <b>cuentan</b>, ningún aviso se pierde (con sleep/wakeup sí se podía perder).`; pcrender();};
+$('pc-r').onclick=()=>{pcinit();pcrender();};
+pcinit(); pcrender();
+})();
+</script>
+
+</body>
+</html>
