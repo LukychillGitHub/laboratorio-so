@@ -1,0 +1,16 @@
+{
+  "name": "Laboratorio de SO",
+  "short_name": "Lab SO",
+  "description": "Teoría, TPs y comandos de Linux para el 2.º parcial de Sistemas Operativos.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f5f6f8",
+  "theme_color": "#2948b8",
+  "lang": "es",
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any"}
+  ]
+}

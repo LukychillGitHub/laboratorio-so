@@ -1,0 +1,1206 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2948b8">
+<meta name="description" content="Guía para el 2.º parcial de Sistemas Operativos (USAL): teoría, TPs y comandos de Linux.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Lab SO">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Parcial 2 de SO</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: hoja de examen — una columna de lectura, nav pegajosa arriba, bloques de "respuesta modelo" con tinta azul */
+:root{
+  --paper:#f6f7f9; --sheet:#ffffff; --ink:#1b1f2a; --muted:#5b6475; --rule:#dde1ea;
+  --pen:#2948b8; --pen-soft:#e6ebfb; --ok:#1d7a4a; --ok-soft:#e3f4ea; --bad:#b3261e; --bad-soft:#fbe7e5; --warn:#8a5a00; --warn-soft:#fdf1d8;
+  --display:"Familjen Grotesk",system-ui,sans-serif; --body:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+  --pA:#5b7cfa; --pB:#e0794b; --pC:#2fa37a; --pD:#b45cc8; --pE:#d4a21c; --pF:#4aa6c9;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#11141b; --sheet:#181c25; --ink:#e6e9f0; --muted:#9aa3b5; --rule:#2a303d;
+  --pen:#8fa6ff; --pen-soft:#1f2747; --ok:#5fd39a; --ok-soft:#173326; --bad:#ff8a80; --bad-soft:#3a1d1b; --warn:#f2c25c; --warn-soft:#352a12; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#11141b; --sheet:#181c25; --ink:#e6e9f0; --muted:#9aa3b5; --rule:#2a303d;
+  --pen:#8fa6ff; --pen-soft:#1f2747; --ok:#5fd39a; --ok-soft:#173326; --bad:#ff8a80; --bad-soft:#3a1d1b; --warn:#f2c25c; --warn-soft:#352a12; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font:15px/1.6 var(--body);margin:0}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--sheet)}
+.wrap{max-width:860px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px 80px}
+header.top{display:flex;flex-direction:column;gap:6px;padding-block:28px 18px}
+.eyebrow{font:500 12px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+h1{font:700 clamp(30px,5vw,44px)/1.05 var(--display);margin:0;text-wrap:balance}
+h2{font:700 26px/1.15 var(--display);margin:0;text-wrap:balance}
+h3{font:600 17px/1.3 var(--body);margin:0}
+p{margin:0}
+.lead{color:var(--muted);max-width:62ch}
+nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--sheet);border-bottom:1px solid var(--rule);overflow-x:auto}
+nav.tabs .in{display:flex;gap:4px;max-width:860px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:8px}
+nav.tabs a{white-space:nowrap;font:500 13px/1 var(--body);color:var(--muted);text-decoration:none;padding:8px 10px;border-radius:6px}
+nav.tabs a:hover,nav.tabs a:focus-visible{background:var(--pen-soft);color:var(--pen);outline:none}
+section{display:flex;flex-direction:column;gap:18px;padding-block:36px 8px;border-top:1px solid var(--rule);margin-top:24px;scroll-margin-top:60px}
+section:first-of-type{border-top:0;margin-top:0}
+.stack{display:flex;flex-direction:column;gap:12px}
+.q{background:var(--sheet);border:1px solid var(--rule);border-radius:10px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.q .n{font:500 12px/1 var(--mono);color:var(--muted)}
+.ans{border-left:3px solid var(--pen);background:var(--pen-soft);padding:10px 14px;border-radius:0 8px 8px 0;color:var(--ink)}
+.ans b,.pen{color:var(--pen)}
+.opts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.opts li{padding:6px 10px;border-radius:6px;font-size:14px}
+.opts li.right{background:var(--ok-soft);color:var(--ok);font-weight:500}
+.opts li.right::before{content:"✓ "}
+.opts li.wrong{color:var(--muted)}
+.opts li.wrong::before{content:"✗ ";color:var(--bad)}
+.why{font-size:13.5px;color:var(--muted)}
+ul.k{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+.tip{background:var(--warn-soft);color:var(--ink);border-radius:8px;padding:10px 14px;font-size:14px}
+.tip b{color:var(--warn)}
+code,.mono{font-family:var(--mono);font-size:.92em}
+code{background:var(--pen-soft);padding:1px 5px;border-radius:4px}
+pre{font:13px/1.5 var(--mono);background:var(--sheet);border:1px solid var(--rule);border-radius:8px;padding:12px;overflow-x:auto;margin:0}
+.tbl{overflow-x:auto;border:1px solid var(--rule);border-radius:8px;background:var(--sheet)}
+table{border-collapse:collapse;width:100%;font-size:14px;font-variant-numeric:tabular-nums}
+th,td{padding:7px 10px;border-bottom:1px solid var(--rule);text-align:left;vertical-align:top}
+th{font:600 12px/1.2 var(--body);color:var(--muted);text-transform:uppercase;letter-spacing:.04em;background:var(--paper)}
+tr:last-child td{border-bottom:0}
+td.num,th.num{text-align:right}
+tfoot td{font-weight:600}
+.gantt{overflow-x:auto;background:var(--sheet);border:1px solid var(--rule);border-radius:8px;padding:12px}
+.g-row{display:grid;grid-template-columns:28px repeat(21,minmax(24px,1fr));min-width:560px}
+.g-row div{height:26px;display:flex;align-items:center;justify-content:center;font:500 12px/1 var(--mono)}
+.g-row .lbl{justify-content:flex-start;color:var(--muted)}
+.g-cell{border-left:1px solid var(--rule)}
+.g-on{color:#fff;border-left:1px solid rgba(255,255,255,.35)}
+.g-axis div{color:var(--muted);font-size:10.5px;justify-content:flex-start;height:16px}
+.g-arr{color:var(--pen) !important}
+.legend{font-size:13px;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.card{background:var(--sheet);border:1px solid var(--rule);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+/* quiz */
+.quiz .q button{font:inherit;font-size:14px;text-align:left;background:var(--paper);color:var(--ink);border:1px solid var(--rule);border-radius:7px;padding:8px 12px;cursor:pointer}
+.quiz .q button:hover{border-color:var(--pen)}
+.quiz .q button:focus-visible{outline:2px solid var(--pen);outline-offset:2px}
+.quiz .q button.ok{background:var(--ok-soft);border-color:var(--ok);color:var(--ok);font-weight:500}
+.quiz .q button.no{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
+.quiz .q button:disabled{cursor:default}
+.quiz .fb{font-size:13.5px;color:var(--muted)}
+.score{position:sticky;bottom:max(12px,env(safe-area-inset-bottom,0px));align-self:flex-end;background:var(--ink);color:var(--sheet);font:500 13px/1 var(--mono);padding:10px 14px;border-radius:999px;display:flex;gap:12px;align-items:center}
+.score button{font:inherit;background:transparent;color:inherit;border:1px solid currentColor;border-radius:999px;padding:4px 10px;cursor:pointer}
+.formula{display:flex;flex-wrap:wrap;gap:8px}
+.formula span{font:500 13px/1 var(--mono);background:var(--sheet);border:1px solid var(--rule);border-radius:6px;padding:8px 10px}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+.dbtn,.chip{font:500 13px/1 var(--body);border-radius:999px;padding:8px 14px;cursor:pointer;border:1px solid var(--rule);background:var(--sheet);color:var(--ink)}
+.dbtn{background:var(--pen);color:var(--sheet);border-color:var(--pen)}
+.dbtn:disabled{opacity:.45;cursor:default}
+.chip[aria-pressed="true"]{background:var(--pen-soft);border-color:var(--pen);color:var(--pen)}
+.dbtn:focus-visible,.chip:focus-visible{outline:2px solid var(--pen);outline-offset:2px}
+.tag{font:500 11px/1 var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+</style>
+
+</head>
+<body>
+<nav class="tabs" aria-label="Secciones"><div class="in">
+  <a href="#desarrollo">Desarrollo</a>
+  <a href="#opinion">Opinión</a>
+  <a href="#simulacro">Simulacro comandos</a>
+  <a href="#modelo">Parcial resuelto</a>
+  <a href="#planificacion">Planificación</a>
+  <a href="#procesos">U8 Procesos</a>
+  <a href="#redes">U9 Redes</a>
+  <a href="#archivos">U10 Archivos</a>
+  <a href="#seguridad">U11 Seguridad</a>
+  <a href="#eleccion">U12 Elección SO</a>
+  <a href="#nube">U13 Nube</a>
+  <a href="#comandos">Comandos (TPs)</a>
+  <a href="#fs">Comparativa FS</a>
+  <a href="#alternativos">SO alternativos</a>
+  <a href="#tanenbaum">Tanenbaum</a>
+  <a href="#quiz">Autoevaluación</a>
+</div></nav>
+
+<div class="wrap">
+<header class="top">
+  <span class="eyebrow">Sistemas Operativos · USAL · 2.º parcial</span>
+  <h1>Parcial 2 de SO</h1>
+  <p class="lead">El parcial del año pasado resuelto pregunta por pregunta, los ejercicios de planificación con el método paso a paso, el resumen de las unidades 8 a 13 y un test para chequearte antes de entrar.</p>
+</header>
+
+<div class="tip"><b>Cómo viene el parcial.</b> Por el modelo del año pasado: 15 preguntas. Una definición (proceso), una a desarrollar (UFW), una de opinión (nube vs. PCs físicas, 2 pts), varias multiple choice de 1 pt, y <b>dos cuadros de planificación de 3 pts cada uno</b>. Los cuadros son 6 de los puntos: si los dominás, tenés gran parte del 10 asegurado.</div>
+
+<div class="tip"><b>Lo que confirmaron para mañana:</b> desarrollo sobre <b>Sistemas de archivos</b> y <b>Procesos</b> · opinión sobre <b>NPU</b>, <b>elección de SO</b> y <b>tendencias globales</b> · multiple choice de <b>comandos</b>. Las tres secciones que siguen cubren exactamente eso.</div>
+
+<!-- ============ DESARROLLO ============ -->
+<section id="desarrollo">
+  <span class="eyebrow">Preguntas de desarrollo</span>
+  <h2>Desarrollo: respuestas modelo</h2>
+  <p class="lead">Están escritas como las podrías poner en la hoja. Primero memorizá el <b>esqueleto</b> (el orden de los temas) y después rellenalo con lo que recuerdes. Si seguís ese orden, no te olvidás de nada.</p>
+
+  <div class="q"><span class="n">Desarrollo 1</span><h3>Sistemas de archivos</h3>
+    <div class="card"><h3>Esqueleto para memorizar</h3>
+      <p class="mono" style="font-size:13px">3 requisitos → archivo (nombre, estructura, tipos, acceso, atributos, operaciones) → directorios → disco (MBR → partición → superbloque → bloques libres → inodo → raíz) → asignación (contigua, enlazada, FAT, inodos) → ejemplos de FS + journaling → tendencias → conclusión</p></div>
+    <div class="ans">
+      <p><b>Introducción.</b> Todas las aplicaciones necesitan guardar y recuperar información. Para que ese almacenamiento sirva tiene que cumplir tres condiciones: poder guardar una gran cantidad de información, que los datos persistan después de que termine el proceso que los creó, y que varios procesos puedan acceder a la misma información de forma concurrente. Para eso el sistema operativo usa una abstracción llamada <b>archivo</b>, y la parte del SO que los administra es el <b>sistema de archivos</b>.</p>
+      <p style="margin-top:8px"><b>El archivo.</b> Es una unidad lógica de información persistente creada por los procesos. El SO lo identifica por su nombre; las reglas dependen del sistema (UNIX distingue mayúsculas de minúsculas, MS-DOS no) y las extensiones indican el tipo de contenido. Internamente puede ser una secuencia de bytes sin estructura (UNIX y Windows), una secuencia de registros de longitud fija o un árbol de registros con llave (bases de datos). Hay <b>archivos regulares</b> (datos del usuario), <b>directorios</b>, <b>especiales de caracteres</b> para E/S en serie (/dev/tty) y <b>especiales de bloques</b> para discos. Se accede de forma <b>secuencial</b> (como una cinta) o <b>aleatoria</b>. Cada archivo tiene <b>atributos</b> (propietario, permisos, banderas de oculto o solo lectura, fechas de creación, acceso y modificación, tamaño) y admite operaciones como create, delete, open, close, read, write, append, seek, get/set attributes y rename.</p>
+      <p style="margin-top:8px"><b>Directorios.</b> Organizan los archivos. Un solo nivel es simple pero poco práctico, por eso los sistemas modernos usan una estructura <b>jerárquica en árbol</b> que parte del directorio raíz (/). Las rutas pueden ser <b>absolutas</b> (desde la raíz, como /home/lucas/doc.txt) o <b>relativas</b> (desde el directorio actual). También existen los enlaces duros y simbólicos.</p>
+      <p style="margin-top:8px"><b>Estructura en disco.</b> El primer sector del disco es el <b>MBR</b>, que contiene el código de arranque y la <b>tabla de particiones</b>. Cada <b>partición</b> es una división lógica con su propio sistema de archivos. Al principio de cada partición está el <b>superbloque</b>, el "mapa general": tipo de FS, tamaño, bloques libres y ocupados, cantidad de inodos y ubicación de la raíz; si se daña, se pierde el acceso a los datos. Los datos se guardan en <b>bloques</b> (unos 4 KB), y los libres se controlan con un <b>mapa de bits</b> (0 libre, 1 ocupado) o con una <b>lista enlazada</b>. Cada archivo tiene un <b>inodo</b>, que guarda todo menos el nombre: permisos, dueño, fechas, tamaño y punteros a los bloques. En UNIX, la entrada de directorio solo asocia el nombre con el número de inodo.</p>
+      <p style="margin-top:8px"><b>Métodos de asignación.</b> La <b>contigua</b> es muy rápida pero genera fragmentación. La <b>lista enlazada</b>, donde cada bloque apunta al siguiente, elimina la fragmentación pero hace lento el acceso aleatorio. La <b>FAT</b> lleva esa cadena de bloques a una tabla en memoria: es eficiente pero queda limitada en discos grandes. Los <b>nodos-i</b> (UNIX/Linux) son el método más avanzado.</p>
+      <p style="margin-top:8px"><b>Ejemplos.</b> MS-DOS usa FAT16/FAT32, que es muy compatible pero con un límite de 4 GB por archivo y sin permisos. Windows NT y posteriores usan <b>NTFS</b>, con permisos ACL, cifrado y <b>journaling</b> (registra los cambios antes de hacerlos para recuperarse ante un corte). Linux usa ext2/ext3/ext4 (ext3 agregó journaling). Los CD y DVD usan ISO 9660/UDF. También están exFAT para pendrives, APFS en Apple, y ZFS y ReFS para servidores con copy-on-write y autorreparación.</p>
+      <p style="margin-top:8px"><b>Tendencias y conclusión.</b> Se estima que el volumen de datos llegó a 175 zettabytes en 2025, impulsado por IoT, multimedia, IA y nube, y crecen el almacenamiento como servicio (StaaS), la nube híbrida, Zero Trust, NVMe 2.1 y PCIe 7.0, y la sostenibilidad. El sistema de archivos es una pieza esencial del SO: gracias al MBR, el superbloque, los inodos y los directorios jerárquicos permite almacenar, organizar y recuperar información de forma persistente, eficiente y segura.</p>
+    </div>
+  </div>
+
+  <div class="q"><span class="n">Desarrollo 2</span><h3>Procesos</h3>
+    <div class="card"><h3>Esqueleto para memorizar</h3>
+      <p class="mono" style="font-size:13px">definición + PID + BCP (8 elementos) → creación (4) y terminación (4) → 5 estados + transiciones → concurrencia → planificación (objetivos, CPU vs E/S, algoritmos) → IPC → condición de carrera → región crítica (4 condiciones) → métodos (interrupciones, lock, Peterson, TSL, semáforos) → productor–consumidor → conclusión</p></div>
+    <div class="ans">
+      <p><b>Definición.</b> Un proceso es un <b>programa en ejecución</b>, es decir, una instancia activa de un programa que tiene su propio espacio de memoria, un estado de ejecución y recursos asignados por el SO (CPU, memoria, E/S, archivos). Se identifica con un <b>PID</b>. Toda su información se guarda en el <b>Bloque de Control de Proceso (BCP)</b>: identificador, estado, prioridad, contador de programa (dirección de la próxima instrucción), punteros a memoria (código, datos y pila), contexto (registros de la CPU), información de E/S y contabilidad (tiempo de CPU usado, límites). El BCP permite interrumpir un proceso y retomarlo más tarde sin perder su estado, y es la base de la multiprogramación.</p>
+      <p style="margin-top:8px"><b>Creación y terminación.</b> Un proceso se crea por un trabajo por lotes, por una sesión interactiva del usuario, por un servicio del SO (por ejemplo, un demonio de impresión) o porque otro proceso crea subprocesos. Termina por fin normal, porque lo detiene su proceso padre, porque el usuario cierra la sesión, o por un error o fallo.</p>
+      <p style="margin-top:8px"><b>Estados.</b> En el modelo de cinco estados, un proceso pasa por <b>Nuevo</b> (creado pero no admitido), <b>Listo</b> (espera la CPU), <b>Ejecución</b>, <b>Bloqueado</b> (espera un evento, como una E/S) y <b>Terminado</b>. Las transiciones son: Nuevo → Listo (admisión), Listo → Ejecución (planificación), Ejecución → Bloqueado (espera de E/S), Bloqueado → Listo (el evento se completó), Ejecución → Listo (fin de quantum o llega uno más prioritario) y Ejecución → Terminado. Un proceso bloqueado nunca pasa directo a ejecución.</p>
+      <p style="margin-top:8px"><b>Concurrencia.</b> En un monoprocesador, la CPU alterna entre procesos cada pocos milisegundos y genera un <b>pseudoparalelismo</b>; en un multiprocesador, el paralelismo es real.</p>
+      <p style="margin-top:8px"><b>Planificación.</b> El planificador decide qué proceso usa la CPU y por cuánto tiempo. Sus objetivos son la <b>equidad</b>, el <b>rendimiento</b> (más trabajos por unidad de tiempo), el <b>tiempo de respuesta</b> y el <b>balance</b> (mantener ocupados la CPU y los dispositivos). Hay procesos limitados por CPU y procesos limitados por E/S. Los algoritmos principales son: <b>FCFS</b> (por orden de llegada, simple pero con esperas largas), <b>SJF</b> (el más corto primero; minimiza la espera promedio pero hay que conocer la duración), <b>SRTF</b> (versión expropiativa de SJF por tiempo restante), <b>Prioridades</b> (puede causar inanición) y <b>Round Robin</b> (quantum fijo, justo e interactivo, depende del tamaño del quantum).</p>
+      <p style="margin-top:8px"><b>Comunicación entre procesos (IPC).</b> Resuelve tres problemas: cómo pasar información, cómo evitar interferencias y cómo sincronizar. Se hace con memoria compartida o con archivos compartidos o spooler. Cuando dos procesos acceden a la vez a un recurso compartido y el resultado depende del orden, hay una <b>condición de carrera</b>. Se evita con <b>exclusión mutua</b> sobre la <b>región crítica</b>, que debe cumplir cuatro condiciones: un solo proceso adentro a la vez; no suponer velocidades ni cantidad de CPUs; un proceso fuera de su región crítica no bloquea a otros; y nadie espera indefinidamente.</p>
+      <p style="margin-top:8px"><b>Soluciones.</b> Deshabilitar interrupciones (no conviene: le da demasiado poder al usuario y no funciona con varias CPUs); variables candado (fallan si no son atómicas); la <b>solución de Peterson</b> (1981), con flag[] y turn, que cumple exclusión mutua pero sirve solo para dos procesos y usa espera activa; la instrucción atómica <b>TSL</b>; y los <b>semáforos de Dijkstra</b> (1965), un contador con operaciones atómicas down y up. El ejemplo clásico es el <b>productor–consumidor</b>: comparten un búfer limitado, el productor se bloquea si el búfer está lleno y el consumidor si está vacío. Con sleep/wakeup se pueden perder señales; con semáforos el problema se resuelve.</p>
+      <p style="margin-top:8px"><b>Conclusión.</b> El proceso es la unidad básica de ejecución y planificación. Se gestiona con el BCP, sus estados permiten la multiprogramación, el planificador decide el orden de ejecución, y los mecanismos de sincronización garantizan que los procesos cooperen sin condiciones de carrera.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ OPINIÓN ============ -->
+<section id="opinion">
+  <span class="eyebrow">Preguntas de opinión</span>
+  <h2>Opinión: cómo armarlas</h2>
+  <div class="card"><h3>Estructura que siempre funciona</h3>
+    <ol class="steps">
+      <li><b>Postura</b> clara en la primera línea.</li>
+      <li><b>2 o 3 argumentos</b> con términos de la materia y un ejemplo real cada uno.</li>
+      <li><b>Contraargumento</b>: reconocer los desafíos o desventajas.</li>
+      <li><b>Conclusión</b> matizada: "depende del contexto", "modelo híbrido".</li>
+    </ol>
+    <p class="why">En las de opinión se corrige la justificación, no la postura. Una opinión sin argumentos técnicos vale poco aunque sea "correcta".</p>
+  </div>
+
+  <div class="q"><span class="n">Opinión 1</span><h3>NPU (Neural Processing Unit)</h3>
+    <div class="card"><h3>Lo que tenés que saber</h3><ul class="k">
+      <li><b>Qué es:</b> un procesador especializado en las operaciones de IA (multiplicaciones de matrices, redes neuronales). Se mide en <b>TOPS</b> (billones de operaciones por segundo). Hoy viene integrada en el mismo chip que la CPU y la GPU.</li>
+      <li><b>Diferencias:</b> la CPU es de propósito general, con pocos núcleos potentes. La GPU hace paralelismo masivo y gráficos, pero consume mucho. La NPU hace inferencia de IA con <b>muy bajo consumo</b>.</li>
+      <li><b>Ejemplos:</b> Apple Neural Engine (desde el iPhone 2017 y los chips M), Intel Core Ultra, AMD Ryzen AI, Qualcomm Snapdragon X. Microsoft exige una NPU de <b>40 TOPS o más</b> para las PCs "Copilot+".</li>
+      <li><b>Usos:</b> efectos de cámara en videollamadas (desenfoque de fondo), subtítulos en vivo, reconocimiento de voz, búsqueda inteligente de fotos y asistentes de IA locales.</li>
+      <li><b>Relación con el SO:</b> el SO necesita drivers, APIs (Windows ML, DirectML, Core ML en Apple) y un planificador que decida qué tarea va a la CPU, a la GPU o a la NPU (<b>computación heterogénea</b>). Es lo que dice Tanenbaum: cada hardware nuevo hace al SO <b>más complejo</b>.</li>
+    </ul></div>
+    <div class="ans">
+      <p><b>Opinión modelo:</b> creo que la NPU se va a volver un componente estándar de cualquier computadora, como pasó con la GPU, y que cambia la forma en que el sistema operativo administra los recursos.</p>
+      <p style="margin-top:8px">En primer lugar, permite ejecutar IA <b>de forma local</b> sin mandar los datos a la nube: es más privado (la voz o las fotos no salen del equipo), tiene menos latencia y funciona sin Internet. En segundo lugar, es mucho más <b>eficiente en energía</b> que usar la CPU o la GPU para las mismas tareas, lo que se traduce en más batería en notebooks y celulares. En tercer lugar, obliga al SO a evolucionar: tiene que planificar tareas entre CPU, GPU y NPU, ofrecer drivers y APIs comunes y aislar los modelos de IA por seguridad. Windows 11 con Copilot+, macOS con Apple Intelligence y Android ya lo hacen.</p>
+      <p style="margin-top:8px">Como contrapartida, hoy hay pocas aplicaciones que la aprovechen de verdad, encarece el hardware, y cada fabricante tiene su propia NPU y su propio software, lo que complica la compatibilidad. Además, muchos equipos actuales no cumplen los 40 TOPS y quedan fuera de las nuevas funciones.</p>
+      <p style="margin-top:8px"><b>Conclusión:</b> para un usuario administrativo común todavía no es indispensable, pero a mediano plazo va a ser un criterio más al <b>elegir hardware y sistema operativo</b>, junto con la RAM y el almacenamiento.</p>
+    </div>
+  </div>
+
+  <div class="q"><span class="n">Opinión 2</span><h3>Elección de SO</h3>
+    <div class="ans">
+      <p><b>Opinión modelo:</b> no existe un sistema operativo "mejor" en abstracto. El más eficiente es el que mejor equilibra <b>compatibilidad de hardware, rendimiento, seguridad, software disponible, soporte y costo</b> para un uso concreto.</p>
+      <p style="margin-top:8px">El primer criterio, y el más importante, es la <b>compatibilidad de hardware</b>: un SO que no se adapta al equipo puede perder entre un 40 y un 60 % de rendimiento y tener fallos frecuentes. Un ejemplo real es el <b>fin del soporte de Windows 10 en octubre de 2025</b>: millones de PCs que no cumplen los requisitos de Windows 11 (TPM 2.0, procesadores recientes) quedaron sin actualizaciones de seguridad. Para esos equipos, alternativas como <b>Lubuntu, Zorin OS Lite o ChromeOS Flex</b> les dan una segunda vida en lugar de descartarlos.</p>
+      <p style="margin-top:8px">El segundo es el <b>perfil del usuario y el software</b>. Para una empresa con empleados administrativos, Windows sigue siendo lo más práctico por su compatibilidad con Office y su soporte oficial. Para diseño y multimedia, macOS. Para servidores y desarrollo, Linux, por su estabilidad, seguridad (es tipo Unix), rendimiento y costo cero de licencia. Si todo se trabaja en la nube, ChromeOS Flex alcanza.</p>
+      <p style="margin-top:8px">Como contraargumento, cambiar de SO tiene costos ocultos: capacitación, migración de datos y aplicaciones que no existen en la otra plataforma. Por eso conviene probar antes con <b>máquinas virtuales o dual-boot</b>.</p>
+      <p style="margin-top:8px"><b>Conclusión:</b> la elección es una decisión estratégica. Hay que analizar el hardware y los usos previstos, priorizar seguridad, rendimiento y soporte a largo plazo, y probar antes de migrar.</p>
+    </div>
+  </div>
+
+  <div class="q"><span class="n">Opinión 3</span><h3>Tendencias globales</h3>
+    <div class="card"><h3>Tendencias para nombrar (elegí 3 o 4 y desarrollalas)</h3><ul class="k">
+      <li><b>Explosión de datos:</b> unos 175 ZB en 2025 (IoT, multimedia, IA, nube)</li>
+      <li><b>Nube híbrida</b> y <b>StaaS</b>: pago por uso (Opex) en lugar de comprar servidores</li>
+      <li><b>IA en todo:</b> en el almacenamiento (organizar, recuperar, proteger datos) y en el hardware (NPU)</li>
+      <li><b>Zero Trust:</b> nunca confiar por defecto, verificar siempre la identidad</li>
+      <li><b>Edge computing:</b> procesar cerca del usuario para reducir la latencia</li>
+      <li><b>Cloud-native:</b> contenedores, Kubernetes, microservicios, serverless</li>
+      <li><b>Hardware:</b> NVMe 2.1, PCIe 7.0, el crecimiento de ARM (Apple M, Snapdragon X)</li>
+      <li><b>Sostenibilidad:</b> menos consumo energético y huella de carbono de los datacenters</li>
+    </ul></div>
+    <div class="ans">
+      <p><b>Opinión modelo:</b> la tendencia principal es pasar de la informática local a un modelo <b>híbrido, distribuido y asistido por IA</b>. Me parece positiva, pero con riesgos que hay que administrar.</p>
+      <p style="margin-top:8px">Por un lado, el volumen de datos crece de forma exponencial (unos 175 zettabytes en 2025), y ninguna organización puede almacenarlo y protegerlo sola. Eso impulsa la <b>nube híbrida</b> y el <b>almacenamiento como servicio</b>: se paga por uso, se escala en segundos y hay alta disponibilidad (SLA superior al 99,99 %). Por otro lado, la <b>inteligencia artificial</b> se mete en todas las capas, desde la gestión del almacenamiento hasta el hardware con las NPU. Y como hay más datos y más conectados, la seguridad pasa al modelo <b>Zero Trust</b>, donde nada se considera confiable por estar "adentro" de la red.</p>
+      <p style="margin-top:8px">Como riesgos, veo la <b>dependencia de unos pocos proveedores</b> (AWS, Azure, Google), con caídas que afectan a millones de usuarios a la vez; la <b>privacidad</b> de los datos; los costos recurrentes a largo plazo; y el <b>consumo energético</b> de los datacenters de IA, que es justamente el motivo por el que la sostenibilidad también es una tendencia.</p>
+      <p style="margin-top:8px"><b>Conclusión:</b> el futuro es híbrido. La nube para escalar y la IA para automatizar, pero con procesamiento local (edge o NPU) para la privacidad y la latencia, y con políticas de seguridad y de energía responsables.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SIMULACRO DE COMANDOS ============ -->
+<section id="simulacro" class="quiz">
+  <span class="eyebrow">Multiple choice</span>
+  <h2>Simulacro de comandos</h2>
+  <p class="lead">Las preguntas y las opciones se mezclan en cada ronda. Filtrá por tema, respondé y al final repetí solo las que erraste hasta que no quede ninguna.</p>
+  <div id="drill-filters" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+  <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+    <button type="button" id="drill-new" class="dbtn">Nueva ronda</button>
+    <button type="button" id="drill-wrong" class="dbtn">Repetir solo las erradas</button>
+    <span id="drill-stat" class="legend"></span>
+  </div>
+  <div id="drill-box" class="stack"></div>
+</section>
+
+<!-- ============ PARCIAL RESUELTO ============ -->
+<section id="modelo">
+  <span class="eyebrow">Modelo del año pasado</span>
+  <h2>Parcial resuelto</h2>
+
+  <div class="q"><span class="n">1 · 1 pt</span><h3>¿Qué es un proceso?</h3>
+    <div class="ans">Un proceso es un <b>programa en ejecución</b>, es decir, una instancia activa de un programa. Tiene su propio espacio de memoria (código, datos, pila), un estado (nuevo, listo, en ejecución, bloqueado, terminado) y recursos asignados por el SO (CPU, memoria, E/S, archivos). Se identifica con un <b>PID</b> y el SO guarda toda su información en el <b>Bloque de Control de Proceso (BCP)</b>, que permite interrumpirlo y retomarlo sin perder su estado. Es la unidad básica de ejecución y planificación.</div>
+  </div>
+
+  <div class="q"><span class="n">2 · 1 pt</span><h3>En el contexto de los procesos, Balance se refiere a…</h3>
+    <ul class="opts">
+      <li class="wrong">Asegurar que todos reciban exactamente la misma cantidad de CPU</li>
+      <li class="right">Mantener ocupadas todas las partes del sistema (CPU, memoria y dispositivos de E/S) para maximizar el trabajo por segundo</li>
+      <li class="wrong">Reducir la carga apagando dispositivos de E/S no usados</li>
+    </ul>
+    <p class="why">La primera opción describe una equidad exagerada (equidad = que todos reciban atención, no exactamente lo mismo).</p>
+  </div>
+
+  <div class="q"><span class="n">3 · 1 pt</span><h3>Las 4 capas del modelo TCP/IP</h3>
+    <div class="ans"><b>1. Aplicación</b> (HTTP/HTTPS, FTP, SMTP, DNS, SSH) · <b>2. Transporte</b> (TCP, UDP) · <b>3. Red / Internet</b> (IP, ICMP) · <b>4. Acceso a la red / Enlace</b> (Ethernet, Wi-Fi 802.11, ARP)</div>
+    <p class="why">Si te sobra tiempo, poné un protocolo de ejemplo por capa: suma.</p>
+  </div>
+
+  <div class="q"><span class="n">4 · 1 pt</span><h3>Estructura de un disco</h3>
+    <ul class="opts">
+      <li class="wrong">El MBR está al final del disco y almacena solo datos de usuario</li>
+      <li class="right">Las particiones son divisiones lógicas del disco, cada una con su sistema de archivos, y el MBR contiene el código de arranque y la tabla de particiones</li>
+      <li class="wrong">El MBR solo tiene info del SO y no se relaciona con las particiones</li>
+    </ul>
+    <p class="why">El MBR es el <b>primer</b> sector del disco.</p>
+  </div>
+
+  <div class="q"><span class="n">5 · 1 pt</span><h3>NTFS</h3>
+    <ul class="opts">
+      <li class="right">Sistema de archivos de Windows NT con seguridad avanzada y registro de cambios (journaling)</li>
+      <li class="wrong">Diseñado para Linux, sin permisos ni cifrado (Linux usa ext2/3/4)</li>
+      <li class="wrong">Formato antiguo de archivos pequeños sin recuperación (eso se parece más a FAT)</li>
+    </ul>
+  </div>
+
+  <div class="q"><span class="n">6 · 1 pt</span><h3>¿Qué es UFW en Linux y qué función cumple?</h3>
+    <div class="ans"><b>UFW (Uncomplicated Firewall)</b> es la herramienta por defecto de Ubuntu para administrar el firewall de forma simple. No reemplaza a <b>iptables</b>: es una <b>capa de abstracción</b> sobre él, y cada regla de UFW se traduce internamente a reglas de iptables. Su función es filtrar el tráfico entrante y saliente, permitiendo o bloqueando conexiones por puerto, protocolo o IP, para impedir accesos no autorizados. Ejemplos: <code>ufw enable</code> (activa), <code>ufw allow 80/tcp</code> (permite HTTP), <code>ufw deny 23/tcp</code> (bloquea Telnet), <code>ufw status numbered</code> (lista reglas). Además ofrece perfiles por servicio, logs para auditoría e integración con systemd.</div>
+  </div>
+
+  <div class="q"><span class="n">7 · 1 pt</span><h3>Ventaja de los SO en la nube</h3>
+    <ul class="opts">
+      <li class="wrong">Pago inicial fijo y arquitectura monolítica (es al revés: pago por uso y microservicios)</li>
+      <li class="right">Escalabilidad elástica, tolerancia a fallos y optimización de costos con modelo Opex y Edge Computing</li>
+      <li class="wrong">Mantenimiento en hardware local y alta latencia (el edge justamente reduce latencia)</li>
+    </ul>
+  </div>
+
+  <div class="q"><span class="n">8 · 2 pts</span><h3>¿Es viable reemplazar las PCs físicas de la facultad por escritorios en la nube?</h3>
+    <div class="ans">
+      <p><b>Postura sugerida: viable en gran parte, pero como modelo híbrido y no como reemplazo total.</b></p>
+      <p style="margin-top:8px"><b>A favor (VDI/DaaS como Azure Virtual Desktop, Amazon WorkSpaces, Citrix DaaS):</b> acceso universal desde cualquier dispositivo (PC, tablet, celular); seguridad centralizada, porque los datos están en servidores protegidos y no se pierden con un equipo; mantenimiento automatizado de actualizaciones y backups; escalabilidad dinámica en épocas de exámenes; modelo Opex de pago por uso, y se puede extender la vida de equipos viejos con SO livianos como ChromeOS Flex.</p>
+      <p style="margin-top:8px"><b>En contra:</b> dependencia de una conexión estable a Internet; latencia en aplicaciones gráficas exigentes (CAD, simulaciones); costos recurrentes a largo plazo; necesidad de capacitar a usuarios y administradores. Además siempre hace falta un dispositivo físico para conectarse.</p>
+      <p style="margin-top:8px"><b>Conclusión:</b> conviene migrar los laboratorios de uso general (ofimática, programación, bases de datos) a escritorios virtuales, y mantener algunos puestos físicos para materias que exigen hardware dedicado o baja latencia.</p>
+    </div>
+    <p class="why">Es de opinión: lo que puntúa es justificar con ventajas y desafíos concretos de la unidad 13. Usá esos términos.</p>
+  </div>
+
+  <div class="q"><span class="n">9 · 1 pt</span><h3>Evaluación integral para elegir un SO</h3>
+    <ul class="opts">
+      <li class="wrong">Priorizar interfaz y familiaridad porque el hardware rara vez afecta (falso: la incompatibilidad degrada 40–60 %)</li>
+      <li class="wrong">Software y velocidad de arranque sin mirar arquitectura ni soporte</li>
+      <li class="right">Analizar en conjunto compatibilidad de hardware (procesador, RAM, almacenamiento), rendimiento, seguridad y experiencia de usuario</li>
+    </ul>
+  </div>
+
+  <div class="q"><span class="n">10 y 11 · 3 pts cada uno</span><h3>Cuadros de Prioridad Expropiativa y FCFS</h3>
+    <p>Están resueltos completos en la sección siguiente, con el diagrama de Gantt y la tabla.</p>
+    <a class="pen" href="#planificacion">Ir a Planificación →</a>
+  </div>
+
+  <div class="q"><span class="n">12 · 1 pt</span><h3>¿Qué muestra <code>ss -tuln</code>?</h3>
+    <ul class="opts">
+      <li class="wrong">Paquetes perdidos en una conexión</li>
+      <li class="wrong">Usuarios conectados</li>
+      <li class="right">Los puertos abiertos y servicios en escucha</li>
+      <li class="wrong">La MAC de la interfaz</li>
+    </ul>
+    <p class="why">t = TCP, u = UDP, l = listening (en escucha), n = numérico sin resolver nombres.</p>
+  </div>
+
+  <div class="q"><span class="n">13 · 1 pt</span><h3><code>ping -c 4 google.com</code> devuelve 4 respuestas con tiempos y TTL</h3>
+    <ul class="opts">
+      <li class="wrong">Dominio bloqueado por el firewall</li>
+      <li class="wrong">El DNS no resolvió el nombre</li>
+      <li class="right">Hay conectividad exitosa hacia Google</li>
+      <li class="wrong">Mide la velocidad del disco</li>
+    </ul>
+    <p class="why">De paso confirma que el DNS sí resolvió el nombre. <code>-c 4</code> = 4 paquetes. ping usa ICMP.</p>
+  </div>
+
+  <div class="q"><span class="n">14 · 1 pt</span><h3>¿Qué comando muestra la IP local?</h3>
+    <ul class="opts">
+      <li class="wrong"><code>ip route show</code>: tabla de rutas y gateway</li>
+      <li class="right"><code>hostname -I</code>: las IP del equipo</li>
+      <li class="wrong"><code>nslookup localhost</code>: consulta DNS (devuelve 127.0.0.1, loopback)</li>
+      <li class="wrong"><code>ss -tuln</code>: puertos en escucha</li>
+    </ul>
+  </div>
+
+  <div class="q"><span class="n">15 · 1 pt</span><h3>¿Qué contiene <code>/etc/resolv.conf</code>?</h3>
+    <ul class="opts">
+      <li class="wrong">Rutas activas y gateway</li>
+      <li class="right">Los servidores DNS que usa el sistema para resolver nombres de dominio</li>
+      <li class="wrong">Interfaces físicas con sus IP</li>
+      <li class="wrong">Procesos usando puertos</li>
+    </ul>
+    <p class="why">Ojo: 14 y 15 no están en el apunte. Mirá la tabla de comandos extra en la unidad 9.</p>
+  </div>
+</section>
+
+<!-- ============ PLANIFICACIÓN ============ -->
+<section id="planificacion">
+  <span class="eyebrow">6 de los puntos</span>
+  <h2>Cuadros de planificación</h2>
+
+  <div class="stack">
+    <h3>Las fórmulas de las columnas</h3>
+    <div class="formula">
+      <span>Finalización = instante en que termina</span>
+      <span>Retorno = Finalización − Llegada</span>
+      <span>Espera = Retorno − T CPU</span>
+      <span>Retorno normalizado = Retorno ÷ T CPU</span>
+    </div>
+    <p class="why">Chequeo rápido: la espera nunca puede ser negativa, y el normalizado siempre es ≥ 1. Si termina siendo 1, el proceso nunca esperó. Al final sacá los promedios de retorno y espera.</p>
+  </div>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Proceso</th><th class="num">Llegada</th><th class="num">T CPU</th><th class="num">Prioridad</th></tr></thead>
+    <tbody>
+      <tr><td>A</td><td class="num">0</td><td class="num">3</td><td class="num">2</td></tr>
+      <tr><td>B</td><td class="num">1</td><td class="num">2</td><td class="num">3</td></tr>
+      <tr><td>C</td><td class="num">2</td><td class="num">5</td><td class="num">0</td></tr>
+      <tr><td>D</td><td class="num">5</td><td class="num">3</td><td class="num">5</td></tr>
+      <tr><td>E</td><td class="num">7</td><td class="num">5</td><td class="num">3</td></tr>
+      <tr><td>F</td><td class="num">8</td><td class="num">3</td><td class="num">4</td></tr>
+    </tbody>
+  </table></div>
+  <p class="why">Datos del parcial del año pasado. Seguramente cambien los números, pero el método es idéntico.</p>
+
+  <!-- FCFS -->
+  <div class="stack">
+    <h3>Ejercicio 11 · FCFS (First Come, First Served)</h3>
+    <ol class="steps">
+      <li>Ordená por llegada. Corre el primero que llegó <b>hasta terminar</b> (no expropiativo).</li>
+      <li>Cuando termina, entra el siguiente en orden de llegada. Si la CPU queda libre y nadie llegó, dejá el hueco vacío.</li>
+    </ol>
+    <div class="gantt" data-g="AAABBCCCCCDDDEEEEEFFF"></div>
+    <div class="tbl"><table>
+      <thead><tr><th>Proc.</th><th class="num">Finaliz.</th><th class="num">Espera</th><th class="num">Retorno</th><th class="num">Ret. normaliz.</th></tr></thead>
+      <tbody>
+        <tr><td>A</td><td class="num">3</td><td class="num">0</td><td class="num">3</td><td class="num">1,00</td></tr>
+        <tr><td>B</td><td class="num">5</td><td class="num">2</td><td class="num">4</td><td class="num">2,00</td></tr>
+        <tr><td>C</td><td class="num">10</td><td class="num">3</td><td class="num">8</td><td class="num">1,60</td></tr>
+        <tr><td>D</td><td class="num">13</td><td class="num">5</td><td class="num">8</td><td class="num">2,67</td></tr>
+        <tr><td>E</td><td class="num">18</td><td class="num">6</td><td class="num">11</td><td class="num">2,20</td></tr>
+        <tr><td>F</td><td class="num">21</td><td class="num">10</td><td class="num">13</td><td class="num">4,33</td></tr>
+      </tbody>
+      <tfoot><tr><td>Prom.</td><td></td><td class="num">4,33</td><td class="num">7,83</td><td class="num">2,30</td></tr></tfoot>
+    </table></div>
+  </div>
+
+  <!-- Prioridad expropiativa -->
+  <div class="stack">
+    <h3>Ejercicio 10 · Prioridad expropiativa</h3>
+    <div class="tip"><b>Convención:</b> lo estándar (Tanenbaum/Stallings y la mayoría de las cátedras) es <b>menor número = mayor prioridad</b>, por eso C (prioridad 0) es el más importante. Si en clase usaron lo contrario, está la versión alternativa más abajo. Escribí en la hoja qué convención usás: si el profe usa la otra, igual se ve que el método está bien.</div>
+    <ol class="steps">
+      <li>En cada instante en que <b>llega un proceso</b> o <b>termina uno</b>, mirá todos los que están listos y elegí el de mejor prioridad.</li>
+      <li>Si llega uno con mejor prioridad que el que está corriendo, <b>lo desaloja</b> (expropiación). El desalojado vuelve a listos con su tiempo restante.</li>
+      <li>Empate de prioridad: desempatá por orden de llegada (FCFS).</li>
+    </ol>
+    <div class="gantt" data-g="AACCCCCABBEEEEEFFFDDD"></div>
+    <div class="card">
+      <h3>Traza</h3>
+      <ul class="k">
+        <li><b>t=0</b> solo A → corre A.</li>
+        <li><b>t=1</b> llega B (3). A (2) es mejor → sigue A.</li>
+        <li><b>t=2</b> llega C (0) → <b>desaloja a A</b> (le queda 1). C corre 2–7.</li>
+        <li><b>t=5</b> llega D (5): peor que C, espera.</li>
+        <li><b>t=7</b> termina C; llega E (3). Listos: A(2), B(3), E(3), D(5) → A corre 7–8.</li>
+        <li><b>t=8</b> termina A; llega F (4). B y E empatan en 3 → B (llegó antes) 8–10.</li>
+        <li><b>t=10</b> E 10–15 → F (4) 15–18 → D (5) 18–21.</li>
+      </ul>
+    </div>
+    <div class="tbl"><table>
+      <thead><tr><th>Proc.</th><th class="num">Finaliz.</th><th class="num">Espera</th><th class="num">Retorno</th><th class="num">Ret. normaliz.</th></tr></thead>
+      <tbody>
+        <tr><td>A</td><td class="num">8</td><td class="num">5</td><td class="num">8</td><td class="num">2,67</td></tr>
+        <tr><td>B</td><td class="num">10</td><td class="num">7</td><td class="num">9</td><td class="num">4,50</td></tr>
+        <tr><td>C</td><td class="num">7</td><td class="num">0</td><td class="num">5</td><td class="num">1,00</td></tr>
+        <tr><td>D</td><td class="num">21</td><td class="num">13</td><td class="num">16</td><td class="num">5,33</td></tr>
+        <tr><td>E</td><td class="num">15</td><td class="num">3</td><td class="num">8</td><td class="num">1,60</td></tr>
+        <tr><td>F</td><td class="num">18</td><td class="num">7</td><td class="num">10</td><td class="num">3,33</td></tr>
+      </tbody>
+      <tfoot><tr><td>Prom.</td><td></td><td class="num">5,83</td><td class="num">9,33</td><td class="num">3,07</td></tr></tfoot>
+    </table></div>
+
+    <details class="card">
+      <summary><b>Versión alternativa: mayor número = mayor prioridad</b></summary>
+      <div class="gantt" data-g="ABBAADDDFFFEEEEECCCCC" style="margin-top:10px"></div>
+      <p class="why">t=1 B(3) desaloja a A(2) · t=3 B termina, A sigue · t=5 D(5) · t=8 F(4) · E(3) · C(0) al final.</p>
+      <div class="tbl"><table>
+        <thead><tr><th>Proc.</th><th class="num">Fin</th><th class="num">Espera</th><th class="num">Retorno</th><th class="num">Normaliz.</th></tr></thead>
+        <tbody>
+          <tr><td>A</td><td class="num">5</td><td class="num">2</td><td class="num">5</td><td class="num">1,67</td></tr>
+          <tr><td>B</td><td class="num">3</td><td class="num">0</td><td class="num">2</td><td class="num">1,00</td></tr>
+          <tr><td>C</td><td class="num">21</td><td class="num">14</td><td class="num">19</td><td class="num">3,80</td></tr>
+          <tr><td>D</td><td class="num">8</td><td class="num">0</td><td class="num">3</td><td class="num">1,00</td></tr>
+          <tr><td>E</td><td class="num">16</td><td class="num">4</td><td class="num">9</td><td class="num">1,80</td></tr>
+          <tr><td>F</td><td class="num">11</td><td class="num">0</td><td class="num">3</td><td class="num">1,00</td></tr>
+        </tbody>
+      </table></div>
+    </details>
+  </div>
+
+  <div class="stack">
+    <h3>Por si cambian el algoritmo · mismos datos</h3>
+    <p class="why">Practicalos tapando la respuesta. Así llegás preparado aunque te toque otro.</p>
+    <div class="card"><h3>SJF (no expropiativo): elige el de menor ráfaga entre los que llegaron</h3>
+      <div class="gantt" data-g="AAABBDDDFFFCCCCCEEEEE"></div>
+      <p class="why">Fin: A3 B5 D8 F11 C16 E21 · Espera: A0 B2 C9 D0 E9 F0 · Prom. espera 3,33 · Prom. retorno 6,83. Con estos datos SRTF da exactamente lo mismo.</p></div>
+    <div class="card"><h3>Prioridad NO expropiativa (menor = mejor)</h3>
+      <div class="gantt" data-g="AAACCCCCBBEEEEEFFFDDD"></div>
+      <p class="why">A no se interrumpe aunque llegue C. Fin: A3 C8 B10 E15 F18 D21 · Prom. espera 5,17.</p></div>
+    <div class="card"><h3>Round Robin q = 2</h3>
+      <div class="gantt" data-g="AABBCCADDCCEEFFDCEEFE"></div>
+      <p class="why">Regla usada: el que llega en el mismo instante en que vence el quantum entra a la cola <b>antes</b> que el desalojado. Fin: A7 B4 C17 D16 E21 F20 · Prom. espera 6,83 · Prom. retorno 10,33.</p></div>
+  </div>
+  <p class="legend">En los Gantt, la fila de abajo marca con ▲ los instantes de llegada.</p>
+</section>
+
+<!-- ============ U8 ============ -->
+<section id="procesos">
+  <span class="eyebrow">Unidad 8</span>
+  <h2>Procesos</h2>
+  <div class="grid2">
+    <div class="card"><h3>BCP: qué guarda</h3>
+      <ul class="k"><li>PID</li><li>Estado</li><li>Prioridad</li><li>Contador de programa (próxima instrucción)</li><li>Punteros a memoria (código, datos, pila)</li><li>Contexto (registros de CPU)</li><li>Info de E/S</li><li>Contabilidad (tiempo de CPU, límites)</li></ul></div>
+    <div class="card"><h3>Creación y terminación</h3>
+      <p><b>Se crea por:</b> lote, sesión interactiva, servicio del SO (ej. demonio de impresión), u otro proceso (subproceso).</p>
+      <p><b>Termina por:</b> fin normal, lo mata el padre, el usuario cierra sesión, error o fallo.</p></div>
+  </div>
+  <div class="card"><h3>Modelo de 5 estados y transiciones</h3>
+    <pre>Nuevo ──admisión──▶ Listo ──planificación──▶ Ejecución ──fin──▶ Terminado
+                      ▲  ◀──fin de quantum───┘   │
+                      │                          │ espera E/S
+                      └────evento completado── Bloqueado ◀┘</pre>
+    <p class="why">Trampa típica: <b>Bloqueado → Ejecución no existe</b>. Siempre pasa por Listo.</p></div>
+  <div class="grid2">
+    <div class="card"><h3>Objetivos del planificador</h3>
+      <ul class="k"><li><b>Equidad:</b> todos reciben atención</li><li><b>Rendimiento:</b> más trabajos por unidad de tiempo</li><li><b>Tiempo de respuesta:</b> menos espera percibida</li><li><b>Balance:</b> CPU y dispositivos siempre ocupados</li></ul></div>
+    <div class="card"><h3>Tipos de procesos</h3>
+      <p><b>Limitados a CPU:</b> cálculo intensivo.</p><p><b>Limitados a E/S:</b> pasan más tiempo esperando E/S.</p>
+      <p><b>Concurrencia:</b> en monoprocesador es pseudoparalelismo (la CPU alterna rápido). En multiprocesador, el paralelismo es real.</p></div>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Algoritmo</th><th>Tipo</th><th>Idea</th><th>Pro / contra</th></tr></thead>
+    <tbody>
+      <tr><td>FCFS</td><td>No expropiativo</td><td>Orden de llegada</td><td>Simple; largas esperas (efecto convoy)</td></tr>
+      <tr><td>SJF</td><td>No expropiativo</td><td>El más corto primero</td><td>Minimiza la espera promedio; hay que conocer la duración</td></tr>
+      <tr><td>SRTF</td><td>Expropiativo</td><td>Menor tiempo restante</td><td>Óptimo en teoría; costoso de calcular</td></tr>
+      <tr><td>Prioridades</td><td>Mixto</td><td>Mayor prioridad primero</td><td>Control; puede causar <b>inanición</b></td></tr>
+      <tr><td>Round Robin</td><td>Expropiativo</td><td>Quantum fijo y al final de la cola</td><td>Justo e interactivo; depende del quantum</td></tr>
+    </tbody>
+  </table></div>
+  <div class="card"><h3>IPC, condiciones de carrera y exclusión mutua</h3>
+    <p><b>IPC</b> resuelve tres problemas: pasar información, evitar interferencias y sincronizar. Se hace con memoria compartida o con archivos compartidos/spooler.</p>
+    <p><b>Condición de carrera:</b> dos o más procesos acceden a la vez a un recurso compartido y el resultado depende del orden. Se soluciona con <b>exclusión mutua</b> sobre la <b>región crítica</b>.</p>
+    <p><b>4 condiciones:</b> (1) uno solo en la región crítica; (2) no suponer velocidades ni cantidad de CPUs; (3) un proceso fuera de su RC no bloquea a otros; (4) nadie espera para siempre.</p>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Método</th><th>Cómo funciona</th><th>Problema</th></tr></thead>
+    <tbody>
+      <tr><td>Deshabilitar interrupciones</td><td>Se apagan al entrar a la RC</td><td>Da demasiado poder al usuario; no sirve con varias CPUs</td></tr>
+      <tr><td>Variable candado (lock)</td><td>0 = libre, 1 = ocupado</td><td>Tiene su propia condición de carrera si no es atómica</td></tr>
+      <tr><td>Peterson (1981)</td><td><code>flag[i]</code> (intención) + <code>turn</code> (a quién le toca)</td><td>Solo 2 procesos y espera activa (consume CPU)</td></tr>
+      <tr><td>TSL</td><td>Instrucción atómica: lee el lock, lo pone en 1 y devuelve el valor viejo (0 entra, 1 espera)</td><td>Espera activa</td></tr>
+      <tr><td>Semáforos (Dijkstra, 1965)</td><td>Entero que cuenta despertares: <code>down</code> decrementa (si es 0 bloquea) y <code>up</code> incrementa y despierta</td><td>Operaciones atómicas: eliminan la carrera</td></tr>
+    </tbody>
+  </table></div>
+  <div class="tip"><b>Productor–Consumidor (Tanenbaum):</b> búfer limitado. El productor se bloquea con el búfer lleno y el consumidor con el búfer vacío. Con solo <code>sleep()</code>/<code>wakeup()</code> se puede <b>perder una señal de despertar</b> (carrera). Los semáforos de Dijkstra lo resuelven.</div>
+</section>
+
+<!-- ============ U9 ============ -->
+<section id="redes">
+  <span class="eyebrow">Unidad 9</span>
+  <h2>Networking en Linux</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Capa TCP/IP</th><th>Función</th><th>Protocolos</th></tr></thead>
+    <tbody>
+      <tr><td><b>Aplicación</b></td><td>Servicios de red para las apps del usuario</td><td>HTTP/HTTPS, FTP, SMTP, DNS, SSH</td></tr>
+      <tr><td><b>Transporte</b></td><td>Extremo a extremo, en orden y sin pérdidas</td><td>TCP (confiable, orientado a conexión), UDP (rápido, sin conexión)</td></tr>
+      <tr><td><b>Red</b></td><td>Direccionamiento IP y enrutamiento</td><td>IP, ICMP (ping)</td></tr>
+      <tr><td><b>Acceso a la red</b></td><td>Transmisión física dentro de la LAN</td><td>Ethernet, Wi-Fi 802.11, ARP (IP → MAC)</td></tr>
+    </tbody>
+  </table></div>
+  <div class="grid2">
+    <div class="card"><h3>TCP vs UDP</h3><p><b>TCP:</b> descargas y web. Garantiza que el archivo llegue completo.</p><p><b>UDP:</b> videollamadas y juegos online. Fluye aunque se pierdan paquetes.</p><p><b>OSI:</b> modelo teórico de referencia (7 capas), no atado a protocolos concretos.</p></div>
+    <div class="card"><h3>Conexión TCP</h3><p><b>Three-way handshake:</b> SYN → SYN-ACK → ACK.</p><p>Los datos viajan en <b>segmentos numerados</b> y se confirman con ACK.</p><p><b>Cierre:</b> four-way handshake (FIN / ACK de cada lado).</p></div>
+    <div class="card"><h3>IP</h3><p><b>IPv4:</b> 32 bits, unos 4 mil millones de direcciones, 4 octetos (192.168.1.1).</p><p><b>IPv6:</b> 128 bits, 8 bloques hexadecimales separados por “:”.</p><p><b>Máscara 255.255.255.0:</b> 3 octetos de red y 1 de host.</p></div>
+    <div class="card"><h3>DNS</h3><p>Traduce nombres a IP (google.com → 142.251.133.14).</p><p>Una <b>respuesta no autoritativa</b> viene de un servidor que no es el principal del dominio, sino que la tiene en caché.</p></div>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Rango de puertos</th><th>Tipo</th><th>Ejemplos</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">0–1023</td><td>Bien conocidos</td><td>FTP 21, <b>SSH 22</b>, Telnet 23, SMTP 25, DNS 53, HTTP 80, HTTPS 443</td></tr>
+      <tr><td class="mono">1024–49151</td><td>Registrados</td><td>MySQL 3306, PostgreSQL 5432</td></tr>
+      <tr><td class="mono">49152–65535</td><td>Dinámicos / privados</td><td>Conexiones efímeras</td></tr>
+    </tbody>
+  </table></div>
+  <div class="tbl"><table>
+    <thead><tr><th>Comando / archivo</th><th>Para qué sirve</th></tr></thead>
+    <tbody>
+      <tr><td><code>ss -tuln</code> / <code>netstat -tuln</code></td><td>Puertos TCP/UDP en escucha (estado LISTEN), en formato numérico</td></tr>
+      <tr><td><code>ping host</code></td><td>Conectividad y RTT con ICMP. <code>-c N</code> = N paquetes</td></tr>
+      <tr><td><code>traceroute host</code></td><td>Ruta por los routers hasta el destino</td></tr>
+      <tr><td><code>ssh</code> / <code>scp</code></td><td>Acceso remoto seguro / copia cifrada de archivos</td></tr>
+      <tr><td><code>telnet host 80</code></td><td>Probar si un puerto puntual responde</td></tr>
+      <tr><td colspan="2" style="color:var(--muted);font-size:12.5px">Lo de abajo no está en el apunte pero <b>apareció en el parcial</b>:</td></tr>
+      <tr><td><code>hostname -I</code></td><td>Muestra las <b>IP locales</b> del equipo</td></tr>
+      <tr><td><code>ip a</code> (<code>ip addr</code>) / <code>ifconfig</code></td><td>Interfaces (eth0, wlan0) con su IP y MAC</td></tr>
+      <tr><td><code>ip route show</code></td><td>Tabla de rutas y <b>gateway</b> por defecto</td></tr>
+      <tr><td><code>nslookup</code> / <code>dig dominio</code></td><td>Consultar el DNS (qué IP tiene un nombre)</td></tr>
+      <tr><td><code>/etc/resolv.conf</code></td><td><b>Servidores DNS</b> que usa el sistema (líneas <code>nameserver</code>)</td></tr>
+      <tr><td><code>/etc/hosts</code></td><td>Resolución local nombre → IP, antes de consultar el DNS</td></tr>
+      <tr><td><code>/etc/hostname</code></td><td>Nombre del equipo</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ============ U10 ============ -->
+<section id="archivos">
+  <span class="eyebrow">Unidad 10</span>
+  <h2>Sistemas de archivos</h2>
+  <div class="card"><h3>Las 3 condiciones del almacenamiento</h3><p>(1) Guardar mucha información; (2) que persista después de que termina el proceso que la creó; (3) acceso concurrente de varios procesos. La abstracción que lo resuelve es el <b>archivo</b>: una unidad lógica de información persistente.</p></div>
+  <div class="grid2">
+    <div class="card"><h3>Estructura interna</h3><ul class="k"><li>Secuencia de bytes (UNIX, Windows)</li><li>Registros de longitud fija</li><li>Árbol de registros con llave (bases de datos)</li></ul><p class="why">UNIX distingue mayúsculas de minúsculas; MS-DOS no.</p></div>
+    <div class="card"><h3>Tipos</h3><ul class="k"><li><b>Regulares:</b> datos del usuario</li><li><b>Directorios:</b> estructura</li><li><b>Especiales de caracteres:</b> E/S en serie (/dev/tty, /dev/lp0)</li><li><b>Especiales de bloques:</b> discos</li></ul></div>
+    <div class="card"><h3>Acceso y atributos</h3><p><b>Secuencial</b> (como una cinta) o <b>aleatorio</b>.</p><p><b>Atributos:</b> propietario, permisos, banderas (oculto, solo lectura, temporal), fechas, tamaño actual y máximo.</p></div>
+    <div class="card"><h3>Operaciones</h3><p>Create, Delete, Open, Close, Read, Write, Append, <b>Seek</b> (mueve el puntero), Get/Set Attributes, Rename.</p><p><b>Rutas:</b> absoluta desde / (<code>/home/santi/doc.txt</code>) o relativa al directorio actual. Links duros y simbólicos, y unlink.</p></div>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Estructura en disco</th><th>Qué es</th></tr></thead>
+    <tbody>
+      <tr><td><b>MBR</b></td><td><b>Primer sector</b> del disco: código de arranque (bootloader) + tabla de particiones. Sin MBR no arranca ni se encuentran las particiones.</td></tr>
+      <tr><td><b>Partición</b></td><td>División lógica del disco con su propio sistema de archivos (ext4, NTFS, FAT32)</td></tr>
+      <tr><td><b>Superbloque</b></td><td>El “mapa general” de cada partición: tipo de FS, tamaño, bloques libres/ocupados, cantidad de inodos, ubicación de la raíz. Si se daña, se pierde el acceso.</td></tr>
+      <tr><td><b>Bloques libres</b></td><td>Bloques de unos 4 KB. Se controlan con <b>bitmap</b> (0 libre, 1 ocupado) o con <b>lista enlazada</b></td></tr>
+      <tr><td><b>Inodo</b></td><td>Toda la info del archivo <b>excepto el nombre</b>: permisos, dueño, grupo, fechas, tamaño, punteros a bloques</td></tr>
+      <tr><td><b>Directorio raíz /</b></td><td>Inicio del árbol jerárquico</td></tr>
+    </tbody>
+  </table></div>
+  <div class="tbl"><table>
+    <thead><tr><th>Asignación de espacio</th><th>Ventaja</th><th>Desventaja</th></tr></thead>
+    <tbody>
+      <tr><td>Contigua</td><td>Muy rápida</td><td>Fragmentación</td></tr>
+      <tr><td>Lista enlazada</td><td>Sin fragmentación</td><td>Acceso lento</td></tr>
+      <tr><td>FAT</td><td>Tabla con el orden de bloques, eficiente</td><td>Limitada en discos grandes</td></tr>
+      <tr><td>Nodos-i</td><td>El más avanzado (UNIX/Linux)</td><td>—</td></tr>
+    </tbody>
+  </table></div>
+  <div class="grid2">
+    <div class="card"><h3>Ejemplos de FS</h3><ul class="k"><li><b>MS-DOS:</b> FAT16 / FAT32</li><li><b>Windows NT, XP y posteriores:</b> NTFS (seguro, journaling)</li><li><b>Linux:</b> ext2 / ext3 / ext4</li><li><b>CD/DVD:</b> ISO 9660, UDF</li></ul></div>
+    <div class="card"><h3>Tendencias 2025</h3><p>175 zettabytes. StaaS, IA aplicada al almacenamiento, Zero Trust, nube híbrida, PCIe 7.0 / NVMe 2.1, sostenibilidad.</p><p class="why">En UNIX, la entrada de directorio solo apunta al inodo. Los nombres pueden tener hasta 255 caracteres.</p></div>
+  </div>
+</section>
+
+<!-- ============ U11 ============ -->
+<section id="seguridad">
+  <span class="eyebrow">Unidad 11</span>
+  <h2>Seguridad en Linux</h2>
+  <div class="grid2">
+    <div class="card"><h3>Firewall</h3><p>Monitorea el tráfico entrante (incoming) y saliente (outgoing) y lo permite o bloquea según reglas. Funciona como filtro entre la red interna y el exterior.</p></div>
+    <div class="card"><h3>UFW vs iptables</h3><p><b>iptables</b> es el motor real: reglas por protocolo, puerto, IP, interfaz y estado de conexión. Es potente pero complejo.</p><p><b>UFW</b> es una capa de abstracción simple encima; sus reglas se traducen a iptables.</p></div>
+  </div>
+  <pre>ufw enable            # activa el firewall
+ufw allow 80/tcp      # permite HTTP
+ufw deny 23/tcp       # bloquea Telnet
+ufw status numbered   # lista reglas numeradas</pre>
+  <div class="tbl"><table>
+    <thead><tr><th>Tabla iptables</th><th>Cadenas</th><th>Para qué</th></tr></thead>
+    <tbody>
+      <tr><td><b>filter</b> (principal)</td><td>INPUT, OUTPUT, FORWARD</td><td>Permitir o bloquear. Acciones: <b>ACCEPT</b>; <b>DROP</b> (descarta sin responder); <b>REJECT</b> (descarta y avisa)</td></tr>
+      <tr><td><b>nat</b></td><td>PREROUTING (DNAT), POSTROUTING (SNAT), OUTPUT</td><td>Cambiar IP. DNAT cambia el destino (8080 → 192.168.1.50:80); SNAT cambia el origen (red privada → IP pública). <b>Masquerading</b> = SNAT con IP pública dinámica</td></tr>
+      <tr><td><b>mangle</b></td><td>—</td><td>Modificaciones avanzadas: marcar para QoS, TOS/DSCP, TTL</td></tr>
+      <tr><td><b>raw</b></td><td>—</td><td>Actúa antes del conntrack: marca paquetes para no rastrearlos (rendimiento)</td></tr>
+    </tbody>
+  </table></div>
+  <div class="tip"><b>FORWARD</b> = paquetes que <b>pasan a través</b> del equipo (cuando hace de router). <b>INPUT</b> = entran al equipo. Es una pregunta clásica.</div>
+  <div class="grid2">
+    <div class="card"><h3>Fail2ban</h3><p>Protege contra <b>fuerza bruta</b> (sobre todo SSH): lee los logs y banea temporalmente la IP atacante.</p>
+      <p>Se configura en <code>/etc/fail2ban/</code>: se copia <code>jail.conf</code> a <b><code>jail.local</code></b> y se edita esa copia.</p>
+      <ul class="k"><li><b>bantime:</b> duración del bloqueo (por defecto 600 s)</li><li><b>findtime:</b> ventana en la que se cuentan los fallos</li><li><b>maxretry:</b> intentos antes del ban</li><li><code>[sshd] enabled = true</code></li></ul></div>
+    <div class="card"><h3>Comandos Fail2ban</h3><pre>systemctl start|enable fail2ban
+fail2ban-client status
+fail2ban-client status sshd
+fail2ban-client unban &lt;IP&gt;</pre></div>
+  </div>
+  <div class="card"><h3>Backups: rsync + cron</h3>
+    <pre>rsync -avz /home/usuario/documentos /home/usuario/backups
+# -a archivo (recursivo, conserva permisos) · -v verbose · -z comprime · --exclude omite carpetas</pre>
+    <pre># crontab: min hora día mes díaSemana
+30 2 * * * rsync -avz /home/usuario/documentos/ /media/usuario/backup/ >> /var/log/rsync.log 2>&1</pre>
+    <p class="why"><code>30 2 * * *</code> = todos los días a las 2:30 AM. <code>2&gt;&amp;1</code> manda también los errores al log. <code>crontab -l</code> lista las tareas, <code>crontab -e</code> las edita.</p></div>
+</section>
+
+<!-- ============ U12 ============ -->
+<section id="eleccion">
+  <span class="eyebrow">Unidad 12</span>
+  <h2>Criterios para elegir el SO</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Criterio</th><th>Clave</th></tr></thead>
+    <tbody>
+      <tr><td>1. <b>Compatibilidad de hardware</b> (el más importante)</td><td>Arquitectura (x86, x64, ARM), recomendado 16 GB DDR4 y 500 GB SSD, GPU. macOS solo en Apple; Linux es el más flexible. La incompatibilidad degrada el rendimiento <b>40–60 %</b>. Probar con benchmarks y usar hardware certificado.</td></tr>
+      <tr><td>2. Experiencia de usuario</td><td>macOS intuitivo; Windows familiar; Linux personalizable y para técnicos</td></tr>
+      <tr><td>3. Software disponible</td><td>Windows: más software y juegos. macOS: diseño y multimedia. Linux: open source y servidores. Alternativas a Office: LibreOffice, WPS, ONLYOFFICE, Google Workspace, OpenOffice, iWork</td></tr>
+      <tr><td>4. Rendimiento</td><td>Linux minimalista arranca en unos 4 s con 512 MB de RAM y rinde hasta 30 % más en hardware limitado. Windows 11 y macOS rinden mejor en equipos modernos</td></tr>
+      <tr><td>5. Seguridad</td><td>macOS y Linux se basan en Unix y son menos vulnerables. Windows mejoró mucho. Importa la rapidez de los parches</td></tr>
+      <tr><td>6. Soporte</td><td>Windows y macOS: oficial. Linux: comunidad</td></tr>
+    </tbody>
+  </table></div>
+  <div class="card"><h3>Decisión estratégica</h3><p>(1) Analizar el hardware y los usos previstos; (2) priorizar seguridad, rendimiento y soporte a largo plazo; (3) probar con dual-boot o máquinas virtuales. La respuesta correcta siempre es la que <b>evalúa todo en conjunto</b>.</p></div>
+</section>
+
+<!-- ============ U13 ============ -->
+<section id="nube">
+  <span class="eyebrow">Unidad 13</span>
+  <h2>Sistemas operativos en la nube</h2>
+  <div class="card"><h3>Qué es</h3><p>Una plataforma de software distribuida que gestiona recursos virtualizados (VMs, contenedores, microservicios) en modelos IaaS/PaaS, sobre una red global de datacenters. Sus tecnologías clave son virtualización, orquestación (Docker, Kubernetes), microservicios, serverless, edge computing, CDN y balanceadores.</p></div>
+  <div class="grid2">
+    <div class="card"><h3>4 beneficios</h3><ul class="k"><li><b>Escalabilidad</b> elástica (horizontal o vertical)</li><li><b>Resiliencia:</b> tolerancia a fallos, replicación entre AZs, SLA superior al 99,99 %</li><li><b>Costos:</b> modelo Opex (pago por uso); el edge ahorra energía y ancho de banda</li><li><b>Seguridad:</b> ISO 27001, SOC 2, GDPR</li></ul></div>
+    <div class="card"><h3>Desafíos</h3><ul class="k"><li>Consistencia de datos (multi-tenant)</li><li>Complejidad de microservicios y serverless (APIs RESTful)</li><li>Latencia y conectividad en el edge</li><li>Seguridad con miles de usuarios</li></ul></div>
+    <div class="card"><h3>Plataformas</h3><p><b>AWS:</b> líder, más de 200 servicios (EC2, S3, Lambda, EKS).</p><p><b>Azure:</b> nube híbrida e integración con Microsoft (VMs, AKS, Functions).</p><p><b>GCP:</b> big data, IA y ML (GKE, Cloud Functions).</p></div>
+    <div class="card"><h3>Modelos</h3><p><b>Despliegue:</b> pública, privada, híbrida.</p><p><b>Servicio:</b> IaaS (infraestructura: VMs, storage) · PaaS (plataforma para desarrollar) · SaaS (software completo por web).</p></div>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Imagen</th><th>Uso</th></tr></thead>
+    <tbody>
+      <tr><td><b>ISO</b></td><td>Instalación local en CD o USB (era física)</td></tr>
+      <tr><td><b>VHD</b></td><td>Disco virtual portable (Azure, virtualización)</td></tr>
+      <tr><td><b>AMI</b></td><td>Amazon Machine Image: lanza muchas instancias idénticas (nube)</td></tr>
+    </tbody>
+  </table></div>
+  <div class="grid2">
+    <div class="card"><h3>Cloud-native</h3><p>Contenedores (virtualización liviana con las dependencias incluidas) + microservicios + Kubernetes (orquesta, escala y recupera).</p><p><b>SO cloud-native:</b> livianos, se actualizan solos, sandboxing y cifrado.</p></div>
+    <div class="card"><h3>Ejemplos</h3><ul class="k"><li><b>Chrome OS:</b> kernel Linux, arranque verificado, sandboxing</li><li><b>FydeOS:</b> derivado de Chromium OS, más privacidad, apps Android y Linux</li><li><b>CloudReady / Chrome OS Flex:</b> de Neverware, comprado por Google, revive equipos viejos</li></ul></div>
+  </div>
+  <div class="card"><h3>VDI / DaaS en educación</h3><p>Azure Virtual Desktop, Citrix DaaS, Amazon WorkSpaces.</p><p><b>Beneficios:</b> acceso universal, seguridad centralizada, mantenimiento automatizado, escalabilidad dinámica.</p><p><b>Desafíos:</b> depende de Internet, latencia en apps gráficas, costos recurrentes, capacitación.</p></div>
+  <div class="tip"><b>SO tradicional vs nube:</b> el tradicional gestiona hardware físico, se instala localmente y escala poco. El de nube se basa en virtualización completa, corre en datacenters y se despliega bajo demanda (EC2, VMs de Azure/GCP).</div>
+</section>
+
+<!-- ============ COMANDOS ============ -->
+<section id="comandos">
+  <span class="eyebrow">TPs de laboratorio</span>
+  <h2>Comandos de Linux</h2>
+  <p class="lead">Todo lo que hicieron en los TPs del servidor, con lo que hace cada comando y qué salida esperar. En el parcial suelen preguntar qué muestra un comando o qué hace un flag.</p>
+
+  <div class="card"><h3>Redirecciones (la base de todos los TPs)</h3>
+    <div class="tbl"><table><tbody>
+      <tr><td><code>cmd &gt; archivo</code></td><td><b>Sobrescribe</b> el archivo con la salida</td></tr>
+      <tr><td><code>cmd &gt;&gt; archivo</code></td><td><b>Agrega al final</b> (anexa). Por eso se usa en entrega.txt</td></tr>
+      <tr><td><code>2&gt;&amp;1</code></td><td>Manda también los <b>errores</b> (stderr, 2) al mismo lugar que la salida (stdout, 1)</td></tr>
+      <tr><td><code>cmd1 | cmd2</code></td><td>Pipe: la salida de cmd1 es la entrada de cmd2</td></tr>
+      <tr><td><code>cmd1 &amp;&amp; cmd2</code></td><td>Ejecuta cmd2 <b>solo si</b> cmd1 salió bien</td></tr>
+    </tbody></table></div>
+  </div>
+
+  <div class="card"><h3>Permisos: chmod, umask y stat</h3>
+    <p>Cada dígito suma <b>r = 4, w = 2, x = 1</b>, en el orden <b>usuario · grupo · otros</b>.</p>
+    <div class="tbl"><table>
+      <thead><tr><th>Comando</th><th>Resultado en <code>ls -l</code></th><th>Significado</th></tr></thead>
+      <tbody>
+        <tr><td><code>chmod 600 secreto.txt</code></td><td class="mono">-rw-------</td><td>Solo el dueño lee y escribe</td></tr>
+        <tr><td><code>chmod 700 ~</code></td><td class="mono">drwx------</td><td>Home aislado de los demás usuarios</td></tr>
+        <tr><td><code>chmod 400 notas.csv</code> / <code>chmod u=r</code></td><td class="mono">-r--------</td><td>Solo lectura para el dueño</td></tr>
+        <tr><td><code>chmod u=rwx,g=rx,o= compartida</code></td><td class="mono">drwxr-x---</td><td>Equivale a 750</td></tr>
+        <tr><td><code>chmod u+x archivo</code></td><td>agrega x al dueño</td><td>Lo hace ejecutable</td></tr>
+        <tr><td><code>chmod go-w archivo</code></td><td>quita w a grupo y otros</td><td>Notación simbólica: + agrega, − quita, = fija</td></tr>
+        <tr><td><code>umask 077</code> + <code>touch</code></td><td class="mono">-rw-------</td><td>La umask <b>resta</b> permisos: archivo 666 − 077 = 600 y directorio 777 − 077 = 700</td></tr>
+        <tr><td><code>stat -c %A archivo</code></td><td class="mono">-rw-------</td><td>Solo la cadena de permisos</td></tr>
+        <tr><td><code>stat archivo</code></td><td>—</td><td>Todo: tamaño, bloques, <b>inodo</b>, enlaces, permisos, UID/GID y fechas de acceso, modificación y cambio</td></tr>
+      </tbody>
+    </table></div>
+    <p class="why">El primer carácter es el tipo: <code>-</code> archivo, <code>d</code> directorio, <code>l</code> enlace simbólico. <code>/etc/passwd</code> normalmente es <span class="mono">-rw-r--r--</span> (644).</p>
+  </div>
+
+  <div class="card"><h3>Navegación y archivos</h3>
+    <div class="tbl"><table><tbody>
+      <tr><td><code>pwd</code></td><td>Muestra la ruta actual</td></tr>
+      <tr><td><code>cd /tmp</code> · <code>cd ~</code></td><td>Cambia de directorio. <code>~</code> = tu home</td></tr>
+      <tr><td><code>ls -la</code></td><td>Lista todo, incluidos los ocultos (empiezan con punto: .bashrc, .profile), en formato largo</td></tr>
+      <tr><td><code>ls -lh</code></td><td>Tamaños legibles (K, M, G)</td></tr>
+      <tr><td><code>ls -lt</code></td><td>Ordena por fecha de modificación, primero el más reciente</td></tr>
+      <tr><td><code>ls -ld dir</code></td><td>Muestra el directorio en sí, no su contenido</td></tr>
+      <tr><td><code>mkdir -p a/b/c</code></td><td>Crea la estructura anidada en un paso, sin error si ya existe</td></tr>
+      <tr><td><code>rmdir dir</code></td><td>Borra un directorio <b>vacío</b></td></tr>
+      <tr><td><code>cp -r origen destino</code></td><td>Copia recursiva (carpetas con contenido)</td></tr>
+      <tr><td><code>mv a b</code></td><td>Mueve <b>o</b> renombra</td></tr>
+      <tr><td><code>touch archivo</code></td><td>Crea un archivo vacío (o actualiza su fecha)</td></tr>
+      <tr><td><code>find ~ -name "*.txt"</code></td><td>Busca por nombre de forma recursiva</td></tr>
+      <tr><td><code>grep "palabra" archivo</code></td><td>Líneas que contienen la palabra. <code>-i</code> ignora mayúsculas, <code>-v</code> invierte (las que <b>no</b> la contienen)</td></tr>
+      <tr><td><code>alias mi_ls='ls -l'</code> · <code>alias</code></td><td>Crea un atajo (solo dura en la sesión) · lista los alias</td></tr>
+    </tbody></table></div>
+  </div>
+
+  <div class="card"><h3>Diagnóstico del sistema</h3>
+    <div class="tbl"><table><tbody>
+      <tr><td><code>uname</code> · <code>-v</code> · <code>-r</code> · <code>-a</code></td><td>Nombre del kernel (Linux) · versión/compilación del kernel · release · todo</td></tr>
+      <tr><td><code>df</code> · <code>-h</code> · <code>df /</code></td><td>Espacio de los <b>sistemas de archivos</b> montados · legible · solo la raíz</td></tr>
+      <tr><td><code>du -sh ~</code> · <code>-c</code></td><td>Espacio que ocupa un archivo o <b>carpeta</b>; s = resumen, c = total</td></tr>
+      <tr><td><code>free -h</code></td><td>RAM y swap: total, used, free, <b>buff/cache</b> (page cache), available</td></tr>
+      <tr><td><code>uptime</code></td><td>Hora, tiempo encendido, usuarios y <b>carga promedio</b> de 1, 5 y 15 minutos</td></tr>
+      <tr><td><code>who</code> · <code>who -q</code></td><td>Usuarios conectados · solo los nombres y la cantidad total</td></tr>
+      <tr><td><code>id</code></td><td>UID, GID y grupos del usuario actual</td></tr>
+      <tr><td><code>ps -u $USER</code> · <code>ps aux</code> / <code>ps -e</code></td><td>Procesos del usuario · todos los procesos</td></tr>
+      <tr><td><code>ps aux | grep bash</code></td><td>Busca un proceso puntual</td></tr>
+      <tr><td><code>top -b -n1</code></td><td>Una "foto" de top en modo batch (para redirigir a un archivo). Interactivo: <b>Shift+M</b> ordena por memoria y Shift+P por CPU</td></tr>
+      <tr><td><code>date</code> · <code>date +%Y</code></td><td>Fecha y hora · solo el año (%m mes, %d día, %H:%M hora)</td></tr>
+      <tr><td><code>ping -c 5 127.0.0.1</code></td><td>5 paquetes al <b>loopback</b>: prueba la pila de red local. Sin -c sigue hasta Ctrl+C</td></tr>
+    </tbody></table></div>
+  </div>
+
+  <div class="card"><h3>TP de texto: head, tail, cut, sort, wc (resuelto)</h3>
+    <pre>echo -e "Juan,80\nAna,90\nLuis,75\nZoe,95" &gt; notas.csv
+echo -e "perro\ncasa\nzorro\navion\nbarco" &gt; palabras.txt</pre>
+    <div class="tbl"><table>
+      <thead><tr><th>#</th><th>Comando</th><th>Salida</th></tr></thead>
+      <tbody>
+        <tr><td>11.1</td><td><code>head -n 3 palabras.txt</code></td><td>perro, casa, zorro</td></tr>
+        <tr><td>11.2</td><td><code>head -n 1 palabras.txt</code></td><td>perro</td></tr>
+        <tr><td>11.3</td><td><code>head -n 10 notas.csv</code></td><td>las 4 líneas (tiene menos de 10). head sin -n muestra 10 por defecto</td></tr>
+        <tr><td>12.1</td><td><code>tail -n 2 palabras.txt</code></td><td>avion, barco</td></tr>
+        <tr><td>12.3</td><td><code>tail -n 1 palabras.txt</code></td><td>barco</td></tr>
+        <tr><td>13.1</td><td><code>cut -d',' -f1 notas.csv</code></td><td>Juan, Ana, Luis, Zoe (-d = delimitador, -f = campo)</td></tr>
+        <tr><td>13.2</td><td><code>cut -c1-3 palabras.txt</code></td><td>per, cas, zor, avi, bar (-c = caracteres)</td></tr>
+        <tr><td>13.3</td><td><code>cut -d',' -f2 notas.csv</code></td><td>80, 90, 75, 95</td></tr>
+        <tr><td>14.1</td><td><code>sort palabras.txt</code></td><td>avion, barco, casa, perro, zorro</td></tr>
+        <tr><td>14.2</td><td><code>sort -r palabras.txt</code></td><td>zorro, perro, casa, barco, avion</td></tr>
+        <tr><td>14.3</td><td><code>sort -t',' -k2 -n notas.csv</code></td><td>Luis,75 · Juan,80 · Ana,90 · Zoe,95 (-t separador, -k columna, -n numérico)</td></tr>
+        <tr><td>15.1</td><td><code>wc -l palabras.txt</code></td><td>5 (líneas)</td></tr>
+        <tr><td>15.2</td><td><code>wc -w palabras.txt</code></td><td>5 (palabras)</td></tr>
+        <tr><td>15.3</td><td><code>wc -c notas.csv</code></td><td>30 (bytes, contando los saltos de línea)</td></tr>
+        <tr><td>—</td><td><code>echo "sistemas operativos" | tr 'a-z' 'A-Z'</code></td><td>SISTEMAS OPERATIVOS</td></tr>
+        <tr><td>—</td><td><code>head -n 5 /etc/passwd | tr '\n' ' '</code></td><td>las 5 líneas pegadas en una sola</td></tr>
+      </tbody>
+    </table></div>
+    <p class="why"><code>wc</code> sin flags devuelve líneas, palabras y bytes, en ese orden.</p>
+  </div>
+
+  <div class="card"><h3>Integridad, compresión y respaldos</h3>
+    <div class="tbl"><table><tbody>
+      <tr><td><code>sha256sum secreto.txt &gt; checksums.sha256</code></td><td>Calcula el <b>hash</b> (huella de 64 caracteres hex) y lo guarda</td></tr>
+      <tr><td><code>sha256sum -c checksums.sha256</code></td><td>Verifica: <span class="mono">secreto.txt: OK</span>. Si el archivo cambió aunque sea un byte: <span class="mono">FAILED</span> y una advertencia. Así se detectan alteraciones</td></tr>
+      <tr><td><code>zip -e -r backups.zip backups/</code></td><td>Comprime en forma recursiva y <b>cifra con contraseña</b> (te la pide dos veces)</td></tr>
+      <tr><td><code>tar -czvf b.tar.gz carpeta/</code></td><td>Empaqueta y comprime con gzip (c crear, z gzip, v verbose, f archivo). <code>-xzvf</code> extrae. tar <b>no cifra</b></td></tr>
+      <tr><td><code>rsync -avz --exclude '*.tmp' ~/lab/ ~/backups/</code></td><td>Sincroniza solo lo que cambió y excluye los .tmp. La <b>barra final</b> en el origen copia el contenido y no la carpeta</td></tr>
+      <tr><td><code>scp user@IP:~/entrega.txt destino</code></td><td>Copia por SSH, cifrada, del servidor a tu PC. WinSCP es la versión gráfica</td></tr>
+    </tbody></table></div>
+  </div>
+
+  <div class="card"><h3>Cron</h3>
+    <pre>┌ minuto (0–59)
+│ ┌ hora (0–23)
+│ │ ┌ día del mes (1–31)
+│ │ │ ┌ mes (1–12)
+│ │ │ │ ┌ día de la semana (0–7, 0 y 7 = domingo)
+*/5 * * * * rsync -avz ~/lab_seguridad/ ~/backups/ &gt;&gt; ~/rsync.log 2&gt;&amp;1</pre>
+    <ul class="k">
+      <li><code>*/5 * * * *</code> cada 5 minutos · <code>30 2 * * *</code> todos los días a las 2:30 · <code>0 9 * * 1-5</code> de lunes a viernes a las 9:00 · <code>0 0 1 * *</code> el día 1 de cada mes a medianoche</li>
+      <li><code>crontab -e</code> edita · <code>crontab -l</code> lista · <code>crontab -r</code> borra todo</li>
+    </ul>
+  </div>
+
+  <div class="card"><h3>Misión 6 · Cuestionario de seguridad (respuestas)</h3>
+    <div class="ans"><b>1. UFW e iptables:</b> UFW es una interfaz simplificada (capa de abstracción) sobre iptables. Cada regla de UFW se traduce a reglas de iptables, que es el motor real del filtrado en el kernel (netfilter).</div>
+    <div class="ans"><b>2. SSH entrante al puerto 22:</b> se evalúa en la cadena <b>INPUT</b> de la tabla filter, porque el destino del tráfico es el propio servidor.</div>
+    <div class="ans"><b>3. DROP vs REJECT:</b> DROP descarta el paquete <b>en silencio</b>, sin responder, y el cliente espera hasta un timeout. REJECT lo descarta y <b>avisa</b> al emisor con un mensaje de rechazo (por ejemplo, ICMP port unreachable o TCP RST). DROP le da menos información a un atacante; REJECT da una respuesta inmediata y es más "educado" en redes internas.</div>
+    <div class="ans"><b>4. Fail2ban:</b> monitorea los logs (por ejemplo, /var/log/auth.log), detecta intentos fallidos de login por SSH y, si una IP supera <b>maxretry</b> fallos dentro de la ventana <b>findtime</b>, la banea con una regla de firewall durante <b>bantime</b> (600 s por defecto).</div>
+    <div class="ans"><b>5. rsync + cron:</b> rsync es incremental (solo transfiere lo que cambió), conserva permisos y atributos, comprime y permite excluir archivos. cron lo automatiza a intervalos fijos sin intervención humana. Juntos dan respaldos frecuentes y livianos, y redirigiendo al log se puede auditar cada ejecución.</div>
+  </div>
+</section>
+
+<!-- ============ COMPARATIVA FS ============ -->
+<section id="fs">
+  <span class="eyebrow">TP de sistemas de archivos</span>
+  <h2>Comparativa de sistemas de archivos</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>FS</th><th>Origen y uso</th><th>Máx. archivo</th><th>Máx. volumen</th><th>Journaling</th><th>Permisos / cifrado</th></tr></thead>
+    <tbody>
+      <tr><td><b>FAT16</b></td><td>MS-DOS, 1984. Hoy casi en desuso</td><td>2 GB</td><td>2 GB (4 GB con clúster de 64 KB)</td><td>No</td><td>No / No</td></tr>
+      <tr><td><b>FAT32</b></td><td>Windows 95 OSR2, 1996. Pendrives, cámaras, consolas</td><td><b>4 GB</b></td><td>2 TB (Windows solo formatea hasta 32 GB)</td><td>No</td><td>No / No</td></tr>
+      <tr><td><b>NTFS</b></td><td>Windows NT 3.1, 1993. Disco de sistema de Windows</td><td>16 TB a 16 EB según la versión</td><td>256 TB (hasta 8 PB en Windows modernos)</td><td><b>Sí</b></td><td>ACL / EFS + BitLocker; compresión y cuotas</td></tr>
+      <tr><td><b>ext2/3/4</b></td><td>Linux: ext2 1993, ext3 2001 (agrega journaling), ext4 2008</td><td>ext4: 16 TB</td><td>ext4: 1 EB</td><td>ext2 no; ext3 y ext4 sí</td><td>POSIX (rwx) / fscrypt por directorio en ext4</td></tr>
+      <tr><td><b>exFAT</b></td><td>Microsoft, 2006. Pensado para flash: SDXC y pendrives grandes</td><td>16 EB (teórico)</td><td>128 PB</td><td>No</td><td>No / No</td></tr>
+      <tr><td><b>ReFS</b></td><td>Windows Server 2012. Servidores y Storage Spaces</td><td>35 PB</td><td>35 PB</td><td>No clásico: checksums e integrity streams</td><td>ACL / BitLocker (no EFS). No arranca Windows</td></tr>
+      <tr><td><b>APFS</b></td><td>Apple, 2017. macOS, iOS, iPadOS, watchOS</td><td>8 EB</td><td>8 EB</td><td>Usa copy-on-write en lugar de journal</td><td>Permisos Unix / cifrado nativo multi-clave</td></tr>
+      <tr><td><b>ZFS</b></td><td>Sun Microsystems, 2005 (hoy OpenZFS). NAS (TrueNAS), FreeBSD, Proxmox</td><td>16 EB</td><td>256 ZB (128 bits)</td><td>Copy-on-write + log (ZIL)</td><td>POSIX/ACL / cifrado nativo</td></tr>
+    </tbody>
+  </table></div>
+  <p class="why">Límites teóricos aproximados, porque dependen del tamaño de bloque y del SO.</p>
+  <div class="grid2">
+    <div class="card"><h3>Ventajas y desventajas en una línea</h3><ul class="k">
+      <li><b>FAT32:</b> compatible con todo · límite de 4 GB por archivo y sin seguridad</li>
+      <li><b>NTFS:</b> seguro y confiable · macOS solo lo lee de forma nativa</li>
+      <li><b>ext4:</b> estable, rápido, estándar en Linux · Windows no lo lee de forma nativa</li>
+      <li><b>exFAT:</b> sin límite de 4 GB y compatible con Win/Mac/Linux · sin journaling, se corrompe si desconectás sin expulsar</li>
+      <li><b>ReFS:</b> se autorrepara, ideal para grandes volúmenes · no sirve para disco de arranque y le faltan funciones de NTFS</li>
+      <li><b>APFS:</b> snapshots, clones instantáneos, optimizado para SSD · exclusivo del ecosistema Apple</li>
+      <li><b>ZFS:</b> integridad de punta a punta, autorreparación, RAID-Z, snapshots, compresión · consume mucha RAM y su licencia CDDL impide incluirlo en el kernel Linux</li>
+    </ul></div>
+    <div class="card"><h3>Dónde lo encontrás</h3><ul class="k">
+      <li>Windows: Administración de discos / Propiedades de la unidad → "Sistema de archivos"</li>
+      <li>Linux: <code>df -T</code> o <code>lsblk -f</code></li>
+      <li>Mac: Utilidad de Discos (APFS)</li>
+      <li>Pendrive o tarjeta SD: FAT32 (hasta 32 GB) o exFAT (64 GB o más)</li>
+      <li>NAS hogareño o TrueNAS: ZFS</li>
+    </ul></div>
+  </div>
+  <div class="tip"><b>Concepto clave · journaling:</b> antes de modificar los datos, el FS anota en un registro (journal) lo que va a hacer. Si se corta la luz, al reiniciar lee el journal y vuelve a un estado consistente sin revisar todo el disco. <b>Copy-on-write</b> (APFS, ZFS, ReFS) nunca sobrescribe en el lugar: escribe en un bloque nuevo y después cambia el puntero.</div>
+</section>
+
+<!-- ============ SO ALTERNATIVOS ============ -->
+<section id="alternativos">
+  <span class="eyebrow">TP de SO alternativos</span>
+  <h2>Tabla comparativa de SO alternativos</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>SO</th><th>Requisitos mínimos (aprox.)</th><th>Costo y licencia</th><th>Ofimática</th><th>Facilidad</th><th>Escenario ideal</th></tr></thead>
+    <tbody>
+      <tr><td><b>ChromeOS Flex</b></td><td>CPU Intel/AMD x86-64, 4 GB RAM, 16 GB</td><td>Gratis. Pago opcional: Chrome Enterprise Upgrade para gestión centralizada</td><td>Google Workspace y Microsoft 365 web</td><td><b>Alto</b></td><td>Revivir PCs viejas en escuelas u oficinas que trabajan en la nube</td></tr>
+      <tr><td><b>Lubuntu</b></td><td>CPU de 64 bits, 1–2 GB RAM, unos 25 GB</td><td>Gratis (GPL), soporte comunitario</td><td>LibreOffice nativo + suites web</td><td>Medio</td><td>PCs de oficina con pocos recursos</td></tr>
+      <tr><td><b>ReactOS</b></td><td>x86 Pentium, 96 MB RAM (256 MB recomendado), unos 650 MB</td><td>Gratis (GPL). Está en fase <b>alfa</b></td><td>Versiones viejas de programas Windows (compatibilidad parcial)</td><td>Bajo (por inestable)</td><td>Investigación, docencia, apps Windows antiguas; no para producción</td></tr>
+      <tr><td><b>Puppy Linux</b></td><td>256–512 MB RAM. Corre desde USB/CD cargado en RAM</td><td>Gratis</td><td>AbiWord/Gnumeric, LibreOffice como paquete</td><td>Medio/Bajo</td><td>Equipos muy antiguos, USB de rescate y recuperación</td></tr>
+      <tr><td><b>FreeBSD</b></td><td>amd64/arm64, desde unos 512 MB en modo texto (2–4 GB con escritorio o ZFS)</td><td>Gratis (licencia BSD). Soporte comercial de terceros</td><td>LibreOffice por pkg + web</td><td>Bajo (sin escritorio por defecto)</td><td>Servidores, firewalls (pfSense, OPNsense), almacenamiento (TrueNAS)</td></tr>
+      <tr><td><b>Haiku OS</b></td><td>x86/x86-64, 384 MB a 1 GB RAM, unos 3 GB</td><td>Gratis (MIT). En fase beta</td><td>Ports limitados (hay un port de LibreOffice)</td><td>Medio</td><td>Entusiastas, aprendizaje, equipos viejos</td></tr>
+      <tr><td><b>Zorin OS Lite</b></td><td>CPU de 1 GHz a 64 bits, 1 GB RAM, 15 GB</td><td>Lite gratis; la edición Pro es paga</td><td>LibreOffice preinstalado + web</td><td><b>Alto</b> (se ve como Windows)</td><td>Migrar usuarios de Windows en PCs modestas</td></tr>
+      <tr><td><b>PrimeOS / Android-x86</b></td><td>x86-64, 2–4 GB RAM, 16 GB</td><td>Gratis. Proyectos con poco mantenimiento</td><td>Apps Android: MS Office, Google Docs, WPS</td><td>Medio</td><td>Apps y juegos Android en PC, kioscos</td></tr>
+      <tr><td><b>Endless OS</b></td><td>x86-64, 2 GB RAM (4 recomendado), 32 GB</td><td>Gratis (Endless Foundation, sin fines de lucro)</td><td>LibreOffice preinstalado, funciona <b>offline</b></td><td><b>Alto</b></td><td>Escuelas y comunidades sin Internet: trae Wikipedia y apps educativas precargadas</td></tr>
+    </tbody>
+  </table></div>
+  <p class="why">Los requisitos son aproximados y varían según la versión. Para el informe verificalos en la web oficial de cada SO.</p>
+</section>
+
+<!-- ============ TANENBAUM ============ -->
+<section id="tanenbaum">
+  <span class="eyebrow">TP de la entrevista</span>
+  <h2>Tanenbaum: ideas clave</h2>
+  <div class="tip"><b>Ojo:</b> no tengo el texto de la entrevista, así que esto es lo conocido públicamente sobre Tanenbaum. Ajustá con lo que dice él en la entrevista que vieron en clase.</div>
+  <div class="grid2">
+    <div class="card"><h3>Trayectoria</h3><ul class="k">
+      <li>Estudió física (MIT y doctorado en Berkeley), pero se pasó a la informática porque las computadoras le resultaban más interesantes y con más futuro práctico.</li>
+      <li>Profesor en la Vrije Universiteit de Ámsterdam. Escribió <i>Sistemas Operativos Modernos</i>, <i>Redes de Computadoras</i> y <i>Organización de Computadoras</i>, que formaron a generaciones de estudiantes en todo el mundo.</li>
+      <li><b>MINIX (1987):</b> AT&amp;T cambió la licencia de UNIX V7 y prohibió enseñar su código fuente. Tanenbaum escribió un clon de UNIX propio y publicó todo el código en el libro para que los alumnos pudieran estudiar un SO real. MINIX inspiró a Linus Torvalds a crear Linux.</li>
+    </ul></div>
+    <div class="card"><h3>Microkernel vs monolítico</h3><ul class="k">
+      <li><b>Monolítico</b> (Linux): todo el SO (drivers, FS, red) corre en modo kernel, en un solo espacio de memoria. Es más rápido, pero un bug en un driver puede tirar todo el sistema.</li>
+      <li><b>Microkernel</b> (MINIX 3, QNX, seL4): el kernel mínimo solo maneja IPC, planificación y memoria básica. Drivers y servicios corren como procesos de usuario. Es más confiable y modular (un driver que falla se reinicia solo), pero el pasaje de mensajes cuesta rendimiento.</li>
+      <li><b>Debate Tanenbaum–Torvalds (1992)</b>, en el hilo "LINUX is obsolete": Tanenbaum dijo que un kernel monolítico era volver a los años 70 y que Linux era poco portable (atado al 386). Torvalds defendió el rendimiento y la practicidad. Hoy Windows y macOS usan kernels <b>híbridos</b>.</li>
+    </ul></div>
+    <div class="card"><h3>Ideas que vuelven y el hardware</h3><ul class="k">
+      <li>Las ideas "reaparecen" cuando cambia la relación de costos del hardware. Ejemplo: el trade-off entre memoria y CPU (cuando la RAM es cara conviene recalcular; cuando es barata, cachear).</li>
+      <li>Los algoritmos de planificación de disco (SCAN, ascensor) pierden sentido con SSD, donde no hay cabezal que mover, pero aparecen otros problemas (desgaste, TRIM).</li>
+      <li>Cada hardware nuevo (GPU, NPU, coprocesadores criptográficos, NVMe) necesita drivers, planificación y aislamiento propios. Por eso el SO no se simplifica: <b>se vuelve más complejo</b>, porque se acumula soporte para hardware heterogéneo y requisitos de seguridad.</li>
+    </ul></div>
+    <div class="card"><h3>Confiabilidad, IA y enseñanza</h3><ul class="k">
+      <li><b>"Daría la mitad del rendimiento por el doble de confiabilidad":</b> el hardware ya es muy rápido; lo caro hoy son las caídas, los bugs y la seguridad. Ejemplos a favor: el fallo de CrowdStrike en 2024 (un driver en modo kernel tiró millones de PCs con Windows), el software de aviones y autos, o los marcapasos. En contra: en gaming, HPC o trading cada milisegundo cuenta. Una postura razonable: depende del dominio, pero en sistemas críticos sí.</li>
+      <li><b>IA en sistemas críticos:</b> postura cautelosa. Es difícil verificar o probar formalmente que una IA es correcta, así que no conviene darle control sin supervisión humana.</li>
+      <li><b>Qué enseñar:</b> principios y algoritmos duraderos, no herramientas como Word o Excel, que cambian cada pocos años. Lo que perdura son los conceptos (procesos, concurrencia, memoria virtual, sistemas de archivos).</li>
+    </ul></div>
+  </div>
+  <div class="card"><h3>Dos principios atemporales y dónde se ven hoy</h3>
+    <p><b>1. Virtualización / abstracción:</b> la memoria virtual y los procesos de los años 60–70 son la base de las VMs, los contenedores Docker y las instancias EC2 en la nube: cada usuario cree tener una máquina propia.</p>
+    <p><b>2. Aislamiento y mínimo privilegio</b> (la filosofía del microkernel): el sandboxing de apps en Android e iOS, cada pestaña de Chrome como un proceso separado, los permisos 600/700 de Linux y los contenedores de la nube.</p>
+    <p class="why">Otros que también podés usar: la planificación (Round Robin en la CPU de tu celular), la exclusión mutua y los semáforos (bases de datos, GPUs) y el caching (CDN, cachés de CPU).</p>
+  </div>
+</section>
+
+<!-- ============ QUIZ ============ -->
+<section id="quiz" class="quiz">
+  <span class="eyebrow">Autoevaluación</span>
+  <h2>Ponete a prueba</h2>
+  <p class="lead">Preguntas en el estilo del parcial. Tocá una opción y te dice al instante si está bien y por qué.</p>
+  <div id="quizbox" class="stack"></div>
+  <div class="score" aria-live="polite"><span id="scoretxt">0 / 0</span><button type="button" id="reset">Reiniciar</button></div>
+</section>
+</div>
+
+<script>
+(function(){
+  // Gantt
+  const col={A:'--pA',B:'--pB',C:'--pC',D:'--pD',E:'--pE',F:'--pF'};
+  const arr={A:0,B:1,C:2,D:5,E:7,F:8};
+  document.querySelectorAll('.gantt').forEach(el=>{
+    const g=el.dataset.g.split('');
+    let html='';
+    ['A','B','C','D','E','F'].forEach(p=>{
+      html+='<div class="g-row"><div class="lbl">'+p+'</div>';
+      g.forEach((k,i)=>{ html+= k===p ? '<div class="g-cell g-on" style="background:var('+col[p]+')">'+p+'</div>' : '<div class="g-cell"></div>'; });
+      html+='</div>';
+    });
+    html+='<div class="g-row g-axis"><div></div>';
+    for(let i=0;i<g.length;i++){ const a=Object.keys(arr).filter(k=>arr[k]===i); html+='<div>'+i+(a.length?' <span class="g-arr">▲'+a.join('')+'</span>':'')+'</div>'; }
+    html+='</div>';
+    el.innerHTML=html;
+  });
+
+  // Quiz
+  const Q=[
+    ['¿Qué transición NO existe en el modelo de 5 estados?',['Listo → Ejecución','Bloqueado → Ejecución','Ejecución → Listo','Bloqueado → Listo'],1,'Un bloqueado, cuando ocurre el evento, vuelve a Listo y espera a que el planificador lo elija.'],
+    ['¿Qué guarda el BCP?',['Solo el PID y el nombre del ejecutable','Toda la info para interrumpir y retomar el proceso: PID, estado, PC, registros, punteros a memoria, E/S','El código fuente del programa','La tabla de particiones'],1,'El BCP permite el cambio de contexto sin perder el estado.'],
+    ['¿Qué algoritmo puede provocar inanición?',['FCFS','Round Robin','Prioridades','Ninguno'],2,'Un proceso de baja prioridad puede no ejecutarse nunca si siguen llegando procesos más prioritarios. (SJF/SRTF también pueden, con procesos largos.)'],
+    ['Round Robin es…',['No expropiativo y por orden de llegada','Expropiativo, con un quantum fijo y vuelta al final de la cola','Expropiativo por tiempo restante','No expropiativo por prioridad'],1,'Es justo y se usa en sistemas interactivos; el rendimiento depende del tamaño del quantum.'],
+    ['¿Cuál es la desventaja principal de la solución de Peterson?',['No garantiza exclusión mutua','Solo sirve para dos procesos y usa espera activa','Requiere deshabilitar interrupciones','Necesita hardware especial'],1,'Cumple exclusión mutua, no hay bloqueo y la espera es limitada, pero consume CPU esperando.'],
+    ['La instrucción TSL…',['Lee el lock, lo pone en 1 y devuelve el valor anterior, de forma atómica','Duerme al proceso hasta que se libere el recurso','Incrementa un semáforo','Deshabilita interrupciones'],0,'Si devuelve 0, el proceso entra a la región crítica; si devuelve 1, espera.'],
+    ['En semáforos, down(s) cuando s = 0…',['Incrementa s','Bloquea al proceso','Despierta a otro proceso','Devuelve error'],1,'down decrementa; si s vale 0, el proceso se bloquea. up incrementa y despierta a uno bloqueado.'],
+    ['¿Por qué falla Productor–Consumidor con sleep/wakeup?',['Porque el búfer es infinito','Porque se puede perder una señal de despertar (condición de carrera)','Porque usa semáforos','Porque no hay región crítica'],1,'Si el wakeup llega antes de que el otro se duerma, se pierde. Dijkstra lo resuelve con semáforos.'],
+    ['¿Qué protocolo traduce IP a MAC?',['DNS','ICMP','ARP','DHCP'],2,'ARP pertenece a la capa de Acceso a la red.'],
+    ['ping utiliza el protocolo…',['TCP','UDP','ICMP','ARP'],2,'ICMP está en la capa de Red y se usa para mensajes de control y error.'],
+    ['Orden del three-way handshake:',['SYN, ACK, FIN','SYN, SYN-ACK, ACK','ACK, SYN, SYN-ACK','FIN, ACK, FIN, ACK'],1,'El cierre usa four-way handshake con FIN y ACK.'],
+    ['Una videollamada usa preferentemente…',['TCP, porque es confiable','UDP, porque prioriza velocidad','ICMP','ARP'],1,'Tolera perder paquetes con tal de no cortarse.'],
+    ['El puerto 3306 es…',['Bien conocido, HTTPS','Registrado, MySQL','Dinámico','Bien conocido, SSH'],1,'Los registrados van de 1024 a 49151. PostgreSQL usa el 5432.'],
+    ['Una respuesta DNS “no autoritativa” significa…',['Que el dominio no existe','Que viene de un servidor que la tiene en caché y no es el principal del dominio','Que fue bloqueada por el firewall','Que la IP es falsa'],1,'Aparece típicamente al usar nslookup.'],
+    ['¿Qué comando muestra el gateway por defecto?',['hostname -I','ip route show','ss -tuln','cat /etc/hosts'],1,'ip route show lista la tabla de rutas, incluida la "default via ...".'],
+    ['El inodo guarda todo lo siguiente EXCEPTO…',['Permisos','El nombre del archivo','Punteros a bloques','Fechas'],1,'El nombre está en la entrada del directorio, que apunta al inodo.'],
+    ['El superbloque contiene…',['El bootloader','Tipo de FS, tamaño, bloques libres/ocupados, cantidad de inodos y ubicación de la raíz','Los datos del usuario','La tabla de particiones de todo el disco'],1,'Es el "mapa general" de cada partición. La tabla de particiones está en el MBR.'],
+    ['¿Qué método de asignación genera fragmentación pero es muy rápido?',['Lista enlazada','Contigua','FAT','Inodos'],1,'La lista enlazada elimina la fragmentación pero hace el acceso más lento.'],
+    ['/dev/tty es un archivo…',['Regular','Directorio','Especial de caracteres','Especial de bloques'],2,'Los de caracteres son E/S en serie (terminal, impresora); los de bloques, discos.'],
+    ['En iptables, la cadena FORWARD controla…',['Paquetes que entran al equipo','Paquetes que salen del equipo','Paquetes que pasan a través del equipo (router)','Cambios de IP de origen'],2,'INPUT = entran, OUTPUT = salen, FORWARD = atraviesan.'],
+    ['¿Diferencia entre DROP y REJECT?',['Son iguales','DROP descarta sin responder; REJECT descarta y envía un mensaje de rechazo','REJECT acepta el paquete','DROP registra en un log'],1,'DROP es "silencioso".'],
+    ['Cambiar la IP de ORIGEN de una red privada por la pública es…',['DNAT en PREROUTING','SNAT en POSTROUTING','Tabla mangle','Tabla raw'],1,'Si la IP pública es dinámica, se usa Masquerading.'],
+    ['Marcar tráfico para QoS o cambiar el TTL se hace en la tabla…',['filter','nat','mangle','raw'],2,'raw sirve para evitar el seguimiento de conexiones (conntrack).'],
+    ['En Fail2ban, ¿dónde conviene hacer los cambios?',['En jail.conf directamente','En una copia llamada jail.local','En /etc/resolv.conf','En crontab'],1,'jail.conf puede pisarse con las actualizaciones.'],
+    ['maxretry en Fail2ban es…',['El tiempo de bloqueo','La cantidad de intentos fallidos antes de banear','La ventana de tiempo','El puerto protegido'],1,'bantime = duración del ban (600 s por defecto); findtime = ventana de conteo.'],
+    ['30 2 * * * en crontab significa…',['Cada 30 minutos','Todos los días a las 2:30','El día 30 a las 2','Cada 2 horas'],1,'El orden de los campos es minuto, hora, día del mes, mes, día de la semana.'],
+    ['En rsync -avz, la "z"…',['Muestra el progreso','Comprime durante la transferencia','Es modo recursivo','Excluye carpetas'],1,'-a = modo archivo (recursivo y conserva permisos), -v = verbose.'],
+    ['Según la unidad 12, el criterio más importante para elegir un SO es…',['Estética','Compatibilidad de hardware','Precio','Cantidad de juegos'],1,'La incompatibilidad puede degradar el rendimiento entre 40 y 60 %.'],
+    ['¿Qué SO ofrece soporte principalmente comunitario?',['Windows','macOS','Linux','Ninguno'],2,'Windows y macOS tienen soporte oficial.'],
+    ['El modelo de costos de la nube es…',['Capex (inversión inicial)','Opex (pago por uso)','Pago único','Gratuito'],1,'Elimina las grandes inversiones iniciales.'],
+    ['Una AMI es…',['Un disco virtual de Azure','Una imagen preconfigurada de AWS para lanzar instancias idénticas','Un archivo de instalación por USB','Un contenedor Docker'],1,'ISO (física), VHD (virtualización, Azure), AMI (nube, AWS).'],
+    ['¿Qué servicio entrega software completo accesible desde la web?',['IaaS','PaaS','SaaS','DaaS'],2,'IaaS = infraestructura, PaaS = plataforma de desarrollo.'],
+    ['Kubernetes es…',['Un hipervisor','Un orquestador de contenedores','Un SO de escritorio','Un sistema de archivos'],1,'Automatiza el despliegue, el escalado y la recuperación ante fallos.'],
+    ['Chrome OS Flex (CloudReady) se destaca por…',['Ser exclusivo de Apple','Revitalizar hardware antiguo','Ser un FS para DVD','Ejecutar solo en la nube de AWS'],1,'Lo creó Neverware y lo compró Google; es ideal para educación.'],
+    ['¿Qué permisos deja chmod 600?',['rwxr-xr-x','rw-------','r--r--r--','rwx------'],1,'6 = 4 + 2 (lectura + escritura) para el dueño y 0 para grupo y otros.'],
+    ['Con umask 077, un archivo nuevo nace con…',['rwxrwxrwx','rw-r--r--','rw-------','---rwxrwx'],2,'666 − 077 = 600. La umask quita permisos.'],
+    ['chmod u=rwx,g=rx,o= equivale en octal a…',['755','750','700','644'],1,'u = 7, g = 5 (4 + 1), o = 0.'],
+    ['Diferencia entre > y >>',['Son iguales','> sobrescribe y >> agrega al final','>> sobrescribe y > agrega','> redirige errores'],1,'Por eso los TPs usan >> para acumular todo en entrega.txt.'],
+    ['¿Para qué sirve 2>&1?',['Duplica el archivo','Manda los errores (stderr) al mismo destino que la salida estándar','Ejecuta dos comandos','Comprime la salida'],1,'1 = stdout, 2 = stderr.'],
+    ['grep -v "/bin/bash" /etc/passwd muestra…',['Las líneas que contienen /bin/bash','Las líneas que NO contienen /bin/bash','Solo la cantidad de líneas','Ignora mayúsculas'],1,'-v invierte la coincidencia; -i ignora mayúsculas y minúsculas.'],
+    ['¿Diferencia entre df y du?',['Ninguna','df muestra el espacio de los sistemas de archivos y du lo que ocupan archivos o carpetas','du muestra la RAM','df borra archivos'],1,'df -h para particiones, du -sh carpeta para una carpeta.'],
+    ['¿Qué muestra free -h?',['El espacio en disco','La memoria RAM y swap: usada, libre, buff/cache y disponible','Los procesos','Los usuarios conectados'],1,'buff/cache es la page cache: RAM usada como caché de disco que se libera si hace falta.'],
+    ['La carga promedio de uptime corresponde a los últimos…',['1, 5 y 15 minutos','1, 10 y 60 minutos','5 segundos','24 horas'],0,'Son los tres números que aparecen después de "load average".'],
+    ['sort -t\',\' -k2 -n notas.csv ordena…',['Alfabéticamente por nombre','Numéricamente por la segunda columna separada por comas','En orden inverso','Por fecha'],1,'-t separador, -k columna, -n numérico, -r inverso.'],
+    ['sha256sum -c devuelve FAILED cuando…',['El archivo fue modificado desde que se calculó el hash','El archivo es muy grande','No hay permisos de red','El archivo está cifrado'],0,'El hash cambia ante cualquier alteración, aunque sea de un byte: sirve para verificar integridad.'],
+    ['¿Qué cifra con contraseña?',['tar -czvf','zip -e','gzip','rsync -z'],1,'tar y gzip solo empaquetan y comprimen; -z de rsync comprime la transferencia.'],
+    ['*/5 * * * * en cron significa…',['El día 5 de cada mes','Cada 5 horas','Cada 5 minutos','5 veces por día'],2,'El primer campo es el minuto.'],
+    ['SSH entrante al puerto 22 se evalúa en la cadena…',['OUTPUT','FORWARD','INPUT','POSTROUTING'],2,'El destino del tráfico es el propio servidor.'],
+    ['¿Qué FS tiene un límite de 4 GB por archivo?',['exFAT','NTFS','FAT32','ext4'],2,'Por eso para pendrives grandes se usa exFAT.'],
+    ['¿Cuál de estos NO tiene journaling?',['NTFS','ext3','exFAT','ext4'],2,'FAT16, FAT32, exFAT y ext2 no tienen journaling.'],
+    ['¿Qué FS usa copy-on-write, snapshots y RAID-Z, y viene de Sun?',['ReFS','APFS','ZFS','NTFS'],2,'Hoy se mantiene como OpenZFS (TrueNAS, FreeBSD, Proxmox).'],
+    ['ReFS se usa principalmente en…',['Pendrives','Windows Server y Storage Spaces','macOS','Android'],1,'Se autorrepara con checksums, pero no sirve como disco de arranque.'],
+    ['¿Qué SO alternativo está pensado para funcionar sin Internet con apps educativas?',['ChromeOS Flex','Endless OS','FreeBSD','ReactOS'],1,'ChromeOS Flex es justamente lo contrario: depende de la nube.'],
+    ['ReactOS es…',['Una distro Linux','Un clon de código abierto compatible con Windows, en fase alfa','Un SO de Apple','Un FS'],1,'No conviene para producción por su inestabilidad.'],
+    ['En un microkernel, los drivers…',['Corren en modo kernel','Corren como procesos en espacio de usuario','No existen','Se compilan en el BIOS'],1,'Si uno falla, se reinicia sin tirar todo el sistema: más confiable, a cambio de algo de rendimiento.'],
+    ['¿Por qué Tanenbaum creó MINIX?',['Para competir con Windows','Porque la licencia de UNIX V7 prohibió enseñar su código y necesitaba un SO con código abierto para enseñar','Para servidores web','Por encargo de IBM'],1,'Publicó el código fuente completo en su libro. MINIX inspiró a Linux.'],
+  ];
+  const box=document.getElementById('quizbox'); let ok=0, done=0;
+  function upd(){document.getElementById('scoretxt').textContent=ok+' / '+done+'  ·  quedan '+(Q.length-done);}
+  function render(){
+    box.innerHTML=''; ok=0; done=0;
+    Q.forEach((q,i)=>{
+      const d=document.createElement('div'); d.className='q';
+      d.innerHTML='<span class="n">'+(i+1)+' / '+Q.length+'</span><h3>'+q[0]+'</h3>';
+      const opts=document.createElement('div'); opts.className='stack'; opts.style.gap='6px';
+      const fb=document.createElement('p'); fb.className='fb'; fb.hidden=true;
+      q[1].forEach((t,j)=>{
+        const b=document.createElement('button'); b.type='button'; b.id='q'+i+'o'+j; b.textContent=t;
+        b.addEventListener('click',()=>{
+          opts.querySelectorAll('button').forEach((x,k)=>{x.disabled=true; if(k===q[2]) x.classList.add('ok');});
+          if(j!==q[2]) b.classList.add('no'); else ok++;
+          done++; fb.hidden=false; fb.innerHTML=(j===q[2]?'<b style="color:var(--ok)">Bien.</b> ':'<b style="color:var(--bad)">No.</b> ')+q[3]; upd();
+        });
+        opts.appendChild(b);
+      });
+      d.appendChild(opts); d.appendChild(fb); box.appendChild(d);
+    });
+    upd();
+  }
+  document.getElementById('reset').addEventListener('click',render);
+  render();
+})();
+</script>
+<script>
+(function(){
+  // [tema, pregunta, correcta, [incorrectas...], explicación]
+  const B=[
+  ['Archivos','¿Qué hace ls -la?','Lista todos los archivos, incluidos los ocultos, en formato largo',['Lista solo los directorios','Borra los archivos ocultos','Lista los archivos ordenados por tamaño'],'-l formato largo, -a all (incluye los que empiezan con punto, como .bashrc).'],
+  ['Archivos','¿Qué agrega -h en ls -lh?','Muestra los tamaños en formato legible (K, M, G)',['Muestra la ayuda','Oculta archivos','Ordena por fecha'],'h = human readable. Funciona igual en df -h, du -h y free -h.'],
+  ['Archivos','ls -lt ordena…','Por fecha de modificación, primero el más reciente',['Alfabéticamente','Por tamaño','Por tipo de archivo'],'-t = time. -S ordena por tamaño, -r invierte.'],
+  ['Archivos','¿Para qué sirve ls -ld ~?','Para ver los permisos del directorio en sí, no su contenido',['Para listar los subdirectorios de forma recursiva','Para borrar el home','Para listar los enlaces'],'-d = directory. Se usa para verificar un chmod 700 ~.'],
+  ['Archivos','¿Qué muestra pwd?','La ruta absoluta del directorio actual',['La contraseña del usuario','Los procesos activos','El directorio padre'],'print working directory.'],
+  ['Archivos','cd ~ lleva a…','La carpeta personal (home) del usuario',['La raíz /','El directorio anterior','/tmp'],'cd .. sube un nivel, cd / va a la raíz, cd - vuelve al directorio anterior.'],
+  ['Archivos','mkdir -p lab/mod1/evid…','Crea toda la estructura anidada de una vez, sin error si ya existe',['Crea solo la carpeta evid','Da error si lab no existe','Crea la carpeta con permisos públicos'],'-p = parents.'],
+  ['Archivos','rmdir practica_so funciona solo si…','El directorio está vacío',['El directorio tiene archivos','Sos root','El directorio está oculto'],'Para borrar un directorio con contenido se usa rm -r.'],
+  ['Archivos','¿Cómo se copia una carpeta con todo su contenido?','cp -r origen destino',['cp origen destino','mv -r origen destino','cp -p origen'],'-r = recursivo. Sin -r, cp no copia directorios.'],
+  ['Archivos','mv borrador.txt notas.txt…','Renombra el archivo',['Copia el archivo','Borra borrador.txt sin crear nada','Crea un enlace'],'mv sirve para mover y para renombrar.'],
+  ['Archivos','¿Qué hace touch archivo.txt si no existe?','Crea un archivo vacío',['Abre el archivo en un editor','Da error','Lo borra'],'Si el archivo ya existe, solo actualiza su fecha de modificación.'],
+  ['Archivos','find ~ -name "*.txt"…','Busca de forma recursiva en el home todos los archivos terminados en .txt',['Busca la palabra txt dentro de los archivos','Lista solo el directorio actual','Borra los .txt'],'find busca por nombre o atributos; grep busca dentro del contenido.'],
+  ['Archivos','¿Qué hace find . -type d?','Lista solo los directorios',['Lista solo los archivos borrados','Busca por fecha','Muestra el espacio usado'],'-type f = archivos regulares, -type d = directorios.'],
+  ['Archivos','La diferencia entre find y grep es…','find busca archivos por nombre o atributos y grep busca texto dentro de los archivos',['Son iguales','grep busca archivos y find busca texto','find solo funciona con root'],'Trampa clásica del multiple choice.'],
+  ['Texto','grep -i "root" /etc/passwd…','Busca root ignorando mayúsculas y minúsculas',['Invierte la búsqueda','Cuenta las coincidencias','Busca de forma recursiva'],'-i = ignore case.'],
+  ['Texto','grep -v "/bin/bash" /etc/passwd muestra…','Las líneas que NO contienen /bin/bash',['Las líneas que contienen /bin/bash','La versión de bash','Solo la primera coincidencia'],'-v = invert match.'],
+  ['Texto','grep -c "palabra" archivo…','Cuenta cuántas líneas coinciden',['Muestra los colores','Busca carácter por carácter','Copia las líneas'],'-c = count. -n agrega números de línea y -r busca de forma recursiva.'],
+  ['Texto','grep -n "x" archivo…','Muestra las coincidencias con su número de línea',['Muestra solo el número total','Niega la búsqueda','Busca sin mayúsculas'],'-n = line number.'],
+  ['Texto','head archivo, sin opciones, muestra…','Las primeras 10 líneas',['La primera línea','Las primeras 5 líneas','Todo el archivo'],'tail sin opciones muestra las últimas 10.'],
+  ['Texto','head -n 1 palabras.txt muestra…','Solo la primera línea',['La última línea','Todas menos la primera','Una línea al azar'],'Con el archivo del TP: perro.'],
+  ['Texto','tail -n 2 palabras.txt (perro, casa, zorro, avion, barco) muestra…','avion y barco',['perro y casa','zorro y avion','barco'],'Las últimas 2 líneas.'],
+  ['Texto','tail -f /var/log/syslog…','Sigue el archivo en tiempo real y muestra las líneas nuevas a medida que se agregan',['Muestra la primera línea','Lo formatea','Lo borra al terminar'],'f = follow. Muy usado para mirar logs.'],
+  ['Texto','cut -d\',\' -f1 notas.csv…','Extrae la primera columna usando la coma como separador',['Borra la primera línea','Muestra el primer carácter','Ordena por la columna 1'],'-d = delimitador, -f = campo (field). Resultado: Juan, Ana, Luis, Zoe.'],
+  ['Texto','cut -c1-3 palabras.txt…','Muestra los primeros 3 caracteres de cada línea',['Muestra las primeras 3 líneas','Muestra la columna 3','Borra 3 caracteres'],'-c = characters. Resultado: per, cas, zor, avi, bar.'],
+  ['Texto','sort -r palabras.txt…','Ordena en orden inverso (Z → A)',['Ordena al azar','Ordena numéricamente','Elimina repetidos'],'-r = reverse.'],
+  ['Texto','¿Qué opción hace que sort ordene números como números (10 después de 9)?','sort -n',['sort -r','sort -u','sort -k'],'Sin -n, sort compara texto: "10" queda antes que "9".'],
+  ['Texto','sort -t\',\' -k2 -n notas.csv…','Ordena de forma numérica por la segunda columna separada por comas',['Ordena por la primera letra','Ordena por el largo de la línea','Ordena de forma inversa por nombre'],'-t separador, -k columna (key), -n numérico. Resultado: Luis 75, Juan 80, Ana 90, Zoe 95.'],
+  ['Texto','wc archivo, sin opciones, muestra…','Líneas, palabras y bytes',['Solo líneas','Solo palabras','Permisos y tamaño'],'En ese orden. -l líneas, -w palabras, -c bytes.'],
+  ['Texto','¿Qué cuenta wc -l?','Líneas',['Letras','Palabras','Bytes'],'l = lines.'],
+  ['Texto','¿Qué cuenta wc -w?','Palabras',['Líneas','Ancho de línea','Bytes'],'w = words.'],
+  ['Texto','¿Qué cuenta wc -c?','Bytes (caracteres)',['Columnas','Comandos','Líneas'],'notas.csv del TP: 30 bytes.'],
+  ['Texto','echo "sistemas" | tr \'a-z\' \'A-Z\' devuelve…','SISTEMAS',['sistemas','Sistemas','Error'],'tr traduce (reemplaza) caracteres.'],
+  ['Texto','head -n 5 /etc/passwd | tr \'\\n\' \' \'…','Pone las 5 líneas en una sola, separadas por espacios',['Borra las 5 líneas','Cuenta 5 líneas','Ordena 5 líneas'],'Reemplaza cada salto de línea (\\n) por un espacio.'],
+  ['Texto','¿Qué hace cat archivo?','Muestra el contenido del archivo',['Lo copia','Lo comprime','Muestra los permisos'],'Viene de concatenate.'],
+  ['Texto','echo -e "a\\nb" > f.txt crea un archivo con…','Dos líneas: a y b',['El texto literal a\\nb','Una línea vacía','Un error'],'-e hace que echo interprete \\n como salto de línea.'],
+  ['Redirección','La diferencia entre > y >> es…','> sobrescribe el archivo y >> agrega al final',['> agrega y >> sobrescribe','Son iguales','>> redirige errores'],'Por eso entrega.txt se completa con >>.'],
+  ['Redirección','¿Qué hace 2>&1 al final de un comando?','Redirige los errores (stderr) al mismo destino que la salida (stdout)',['Ejecuta el comando dos veces','Manda la salida al archivo 2','Descarta los errores'],'Descriptor 1 = stdout, 2 = stderr.'],
+  ['Redirección','En cmd1 | cmd2, el | (pipe)…','Pasa la salida de cmd1 como entrada de cmd2',['Ejecuta los dos en paralelo sin conexión','Ejecuta cmd2 solo si cmd1 falla','Guarda en un archivo'],'Ejemplo: ps aux | grep bash.'],
+  ['Redirección','En cmd1 && cmd2…','cmd2 se ejecuta solo si cmd1 terminó bien',['cmd2 se ejecuta siempre','cmd2 se ejecuta si cmd1 falla','Se ejecutan en paralelo'],'Si querés que cmd2 corra cuando cmd1 falla, se usa ||.'],
+  ['Permisos','chmod 600 secreto.txt deja…','-rw------- (el dueño lee y escribe; nadie más tiene acceso)',['-rwxr-xr-x','-r--r--r--','-rw-r--r--'],'6 = r(4) + w(2) para el dueño; 0 para grupo y otros.'],
+  ['Permisos','chmod 700 ~ deja el home como…','drwx------',['drwxr-xr-x','drw-------','drwxrwxrwx'],'Solo el dueño puede leer, escribir y entrar.'],
+  ['Permisos','¿Qué permisos son 755?','rwxr-xr-x',['rwxrwxrwx','rw-r--r--','rwx------'],'7 = 4 + 2 + 1, 5 = 4 + 1. Típico de directorios y scripts.'],
+  ['Permisos','¿Qué permisos son 644?','rw-r--r--',['rwxr--r--','rw-rw-rw-','r--r--r--'],'Típico de archivos de texto, como /etc/passwd.'],
+  ['Permisos','¿Qué permisos son 400?','r-------- (solo lectura para el dueño)',['rw-------','r--r--r--','rwx------'],'Equivale a chmod u=r.'],
+  ['Permisos','chmod u+x script.sh…','Le agrega permiso de ejecución al dueño',['Le quita la ejecución a todos','Le da todos los permisos al usuario','Lo convierte en directorio'],'u = user, g = group, o = others, a = all.'],
+  ['Permisos','chmod go-w archivo…','Le quita el permiso de escritura a grupo y otros',['Le da escritura a grupo y otros','Le quita todo al dueño','Cambia el grupo del archivo'],'- quita, + agrega, = fija exactamente.'],
+  ['Permisos','chmod u=rwx,g=rx,o= equivale a…','750',['755','700','570'],'u = 7, g = 5, o = 0 → drwxr-x---.'],
+  ['Permisos','En r w x, ¿cuánto vale cada letra?','r = 4, w = 2, x = 1',['r = 1, w = 2, x = 4','r = 2, w = 4, x = 1','Todas valen 1'],'Se suman por cada grupo: dueño, grupo y otros.'],
+  ['Permisos','Con umask 077, un archivo nuevo nace con…','rw------- (600)',['rwxrwxrwx','rw-r--r--','---rwxrwx'],'La umask quita permisos: 666 − 077 = 600. A los directorios: 777 − 077 = 700.'],
+  ['Permisos','Con la umask típica 022, un archivo nuevo nace con…','644 (rw-r--r--)',['600','755','022'],'666 − 022 = 644.'],
+  ['Permisos','En ls -l, una línea que empieza con d indica…','Un directorio',['Un archivo borrado','Un disco','Un demonio'],'- = archivo regular, l = enlace simbólico, c = especial de caracteres, b = especial de bloques.'],
+  ['Permisos','stat -c %A secreto.txt devuelve…','Solo la cadena de permisos, como -rw-------',['El tamaño','El inodo','La fecha de acceso'],'-c permite elegir un formato. %a da el permiso en octal (600).'],
+  ['Permisos','¿Qué información da stat archivo?','Tamaño, bloques, inodo, enlaces, permisos, UID/GID y fechas de acceso, modificación y cambio',['Solo el nombre','El contenido del archivo','Los procesos que lo usan'],'Por eso se compara con ls -l: stat muestra más detalle, incluido el inodo.'],
+  ['Sistema','df -h muestra…','El espacio usado y libre de los sistemas de archivos montados, en formato legible',['El tamaño de cada carpeta','La memoria RAM','Los procesos'],'df = disk free.'],
+  ['Sistema','df / muestra…','Solo el sistema de archivos raíz',['Todos los discos','El directorio home','La raíz de la red'],'Se puede pasar una ruta para ver el FS que la contiene.'],
+  ['Sistema','du -sh ~ muestra…','El espacio total que ocupa tu directorio personal',['El espacio libre del disco','Los usuarios del sistema','El tamaño de la RAM'],'du = disk usage. s = summary (total), h = legible.'],
+  ['Sistema','La diferencia entre df y du es…','df muestra los sistemas de archivos y du lo que ocupan archivos y carpetas',['Son iguales','du muestra la RAM','df solo funciona como root'],'Otra trampa clásica.'],
+  ['Sistema','du -ch *…','Muestra el tamaño de cada elemento y una línea de total al final',['Comprime los archivos','Cambia los permisos','Muestra los ocultos'],'-c = total.'],
+  ['Sistema','free -h muestra…','La memoria RAM y swap: total, usada, libre, buff/cache y disponible',['El espacio en disco','La CPU libre','Los puertos libres'],'Es lo que se usa para revisar la memoria.'],
+  ['Sistema','En free, la columna buff/cache es…','RAM usada como caché de disco (page cache), que se libera si hace falta',['Memoria dañada','Swap en disco','Memoria de video'],'Por eso conviene mirar "available" y no "free".'],
+  ['Sistema','uptime muestra…','Hora actual, tiempo encendido, usuarios y carga promedio de 1, 5 y 15 minutos',['Solo la hora','La velocidad de la red','El tiempo hasta el próximo reinicio'],'Load average = carga promedio.'],
+  ['Sistema','who muestra…','Los usuarios conectados en este momento',['Todos los usuarios del sistema','El usuario root','Los grupos'],'who -q muestra solo los nombres y la cantidad total.'],
+  ['Sistema','who -q…','Muestra solo los nombres y la cantidad total de usuarios conectados',['Sale sin mostrar nada','Muestra los procesos de cada usuario','Muestra las IP'],'q = quick.'],
+  ['Sistema','id muestra…','UID, GID y grupos del usuario actual',['La IP','El ID del proceso','El número de serie del disco'],'Ejemplo: uid=1001(lucas) gid=1001(lucas) groups=1001(lucas).'],
+  ['Sistema','uname, sin opciones, muestra…','El nombre del kernel (Linux)',['La versión de Ubuntu','El nombre del usuario','El hostname'],'uname -a muestra todo, -r el release y -v la versión/compilación del kernel.'],
+  ['Sistema','uname -v muestra…','La versión (compilación) del kernel',['La versión de bash','Los usuarios','El uptime'],'v = version.'],
+  ['Sistema','¿Qué archivo lista las cuentas de usuario del sistema?','/etc/passwd',['/etc/hosts','/etc/resolv.conf','/var/log/auth.log'],'Cada línea tiene usuario:x:UID:GID:info:home:shell. Las contraseñas cifradas están en /etc/shadow.'],
+  ['Sistema','alias mi_ls=\'ls -l\'…','Crea un atajo que dura solo en la sesión actual',['Lo crea de forma permanente','Renombra el comando ls','Borra ls'],'Para que sea permanente, se agrega a ~/.bashrc. "alias" solo lista los alias.'],
+  ['Sistema','date +%Y muestra…','Solo el año',['La fecha completa','El día de la semana','La zona horaria'],'%m mes, %d día, %H hora, %M minuto, %A día de la semana.'],
+  ['Procesos','ps aux muestra…','Todos los procesos del sistema con usuario, PID, %CPU y %MEM',['Solo tus procesos','Los procesos terminados','Los puertos abiertos'],'También sirve ps -e o ps -ef.'],
+  ['Procesos','¿Cómo se ven solo los procesos de tu usuario?','ps -u $USER',['ps aux','ps -e','top -u root'],'También vale ps ux.'],
+  ['Procesos','ps aux | grep bash…','Filtra la lista de procesos para mostrar los que tienen bash',['Mata los procesos bash','Inicia bash','Cuenta procesos'],'Combinación de pipe + grep.'],
+  ['Procesos','top -b -n1…','Toma una sola "foto" de top en modo batch, ideal para redirigir a un archivo',['Abre top interactivo para siempre','Mata el proceso 1','Muestra solo 1 proceso'],'-b = batch, -n1 = 1 iteración.'],
+  ['Procesos','En top interactivo, Shift+M…','Ordena los procesos por memoria',['Sale de top','Ordena por CPU','Mata un proceso'],'Shift+P ordena por CPU y q sale.'],
+  ['Procesos','¿Qué identifica de forma única a un proceso?','El PID',['El UID','El inodo','El puerto'],'El UID identifica al usuario.'],
+  ['Respaldo','sha256sum archivo…','Calcula el hash SHA-256 (la huella digital) del archivo',['Cifra el archivo','Lo comprime','Cambia sus permisos'],'Si cambia un solo byte, el hash cambia por completo.'],
+  ['Respaldo','sha256sum -c checksums.sha256 sobre un archivo modificado devuelve…','FAILED',['OK','Nada','Permission denied'],'Sin modificar: "secreto.txt: OK". Sirve para verificar integridad.'],
+  ['Respaldo','zip -e -r backups.zip backups/…','Comprime la carpeta de forma recursiva y la protege con contraseña',['Extrae backups.zip','Comprime sin cifrar','Borra la carpeta'],'-e = encrypt, -r = recursivo.'],
+  ['Respaldo','tar -czvf b.tar.gz carpeta/…','Crea un archivo empaquetado y comprimido con gzip',['Lo extrae','Lo cifra con contraseña','Sincroniza la carpeta'],'c crear, z gzip, v verbose, f archivo. tar no cifra.'],
+  ['Respaldo','tar -xzvf b.tar.gz…','Extrae el contenido',['Lo crea','Lo cifra','Lista los permisos'],'x = extract.'],
+  ['Respaldo','En rsync -avz, ¿qué significa cada letra?','a modo archivo (recursivo y conserva permisos), v verbose, z comprime',['a all, v verificar, z cifrar','a agregar, v versión, z zip','a automático, v virtual, z cero'],'Es la combinación clásica de respaldo.'],
+  ['Respaldo','rsync --exclude \'*.tmp\'…','No copia los archivos .tmp',['Copia solo los .tmp','Borra los .tmp','Comprime los .tmp'],'Omite lo que coincide con el patrón.'],
+  ['Respaldo','¿Por qué rsync es eficiente para backups?','Porque solo transfiere lo que cambió (incremental) y conserva atributos',['Porque cifra con AES','Porque borra los originales','Porque solo funciona en red'],'Junto con cron, automatiza el respaldo.'],
+  ['Respaldo','rsync ~/lab/ ~/backups/, con barra al final del origen, copia…','El contenido de lab dentro de backups',['La carpeta lab entera dentro de backups (backups/lab)','Nada','Solo los ocultos'],'Sin la barra (~/lab) crea backups/lab.'],
+  ['Cron','¿Qué hace crontab -e?','Abre el crontab del usuario para editar las tareas programadas',['Ejecuta todas las tareas','Borra el crontab','Muestra el log de cron'],'-l lista y -r borra.'],
+  ['Cron','¿Qué hace crontab -l?','Lista las tareas programadas',['Bloquea cron','Carga un archivo','Muestra los logs'],'Se usa para verificar y se redirige a entrega.txt.'],
+  ['Cron','*/5 * * * * significa…','Cada 5 minutos',['Cada 5 horas','El día 5 de cada mes','5 veces por día'],'El primer campo es el minuto.'],
+  ['Cron','30 2 * * * significa…','Todos los días a las 2:30',['Cada 30 minutos durante 2 horas','El 30 de febrero','A las 30:02'],'Orden de los campos: minuto, hora, día del mes, mes, día de la semana.'],
+  ['Cron','0 9 * * 1-5 significa…','De lunes a viernes a las 9:00',['El día 9, de enero a mayo','Cada 9 minutos','A las 0:09'],'El último campo es el día de la semana (0 o 7 = domingo).'],
+  ['Cron','¿Cuál es el orden de los 5 campos de cron?','minuto · hora · día del mes · mes · día de la semana',['hora · minuto · día · mes · año','segundo · minuto · hora · día · mes','día · mes · año · hora · minuto'],'Truco para recordarlo: "Mi Hora Del Mes Diaria".'],
+  ['Red','ss -tuln muestra…','Los puertos TCP y UDP en escucha, en formato numérico',['Los usuarios conectados','Los paquetes perdidos','La MAC'],'t TCP, u UDP, l listening, n numérico. netstat -tuln es el equivalente viejo.'],
+  ['Red','En ss o netstat, la opción -n…','Muestra direcciones y puertos en número, sin resolver nombres',['Muestra solo conexiones nuevas','Muestra la red','Niega el filtro'],'Es más rápido porque no consulta el DNS.'],
+  ['Red','En ss o netstat, la opción -l…','Muestra solo los sockets en escucha (LISTEN)',['Muestra los logs','Lista los usuarios','Limita la salida'],'Sirve para ver qué servicios esperan conexiones.'],
+  ['Red','ping -c 4 google.com con 4 respuestas indica…','Que hay conectividad y que el DNS resolvió el nombre',['Que el firewall lo bloquea','Que el disco funciona','Que el DNS falló'],'-c = cantidad de paquetes. Usa ICMP y muestra tiempo y TTL.'],
+  ['Red','ping 127.0.0.1 prueba…','La interfaz loopback (la propia máquina)',['Internet','El router','El DNS'],'Si falla, el problema es la pila de red local.'],
+  ['Red','Sin la opción -c, ping en Linux…','Sigue indefinidamente hasta Ctrl+C',['Manda 4 paquetes','Manda 1 paquete','Da error'],'En Windows, en cambio, manda 4 por defecto.'],
+  ['Red','¿Qué comando muestra la IP local?','hostname -I',['ip route show','nslookup localhost','ss -tuln'],'También: ip a (o ip addr) o ifconfig.'],
+  ['Red','ip a muestra…','Las interfaces de red (lo, eth0, wlan0) con su IP y MAC',['La tabla de rutas','Los servidores DNS','Los procesos de red'],'Es el reemplazo moderno de ifconfig.'],
+  ['Red','ip route show muestra…','La tabla de rutas y el gateway por defecto',['Las IP de los vecinos','Los puertos abiertos','El hostname'],'La línea "default via X" es el gateway.'],
+  ['Red','/etc/resolv.conf contiene…','Los servidores DNS que usa el sistema (líneas nameserver)',['Las rutas','Las interfaces','Los usuarios'],'Pregunta del parcial pasado.'],
+  ['Red','/etc/hosts sirve para…','Resolver nombres a IP de forma local, antes de consultar el DNS',['Guardar contraseñas','Configurar el firewall','Listar los usuarios'],'Ejemplo: 127.0.0.1 localhost.'],
+  ['Red','nslookup o dig google.com sirven para…','Consultar el DNS y ver qué IP tiene un dominio',['Medir la velocidad','Abrir un puerto','Ver la ruta'],'Pueden devolver una respuesta "no autoritativa" (desde la caché).'],
+  ['Red','traceroute google.com muestra…','Los routers (saltos) por los que pasan los paquetes hasta el destino',['El tiempo de encendido','Los puertos abiertos del destino','La IP local'],'Sirve para encontrar dónde se corta una conexión.'],
+  ['Red','telnet google.com 80 se usa para…','Probar si un puerto puntual acepta conexiones',['Mandar un correo cifrado','Copiar archivos','Ver la ruta'],'Telnet no está cifrado; para acceso remoto se usa SSH.'],
+  ['Red','ssh usuario@IP…','Abre una sesión remota cifrada en el servidor (puerto 22)',['Copia archivos','Hace ping','Abre el firewall'],'SSH = Secure Shell.'],
+  ['Red','scp user@IP:~/entrega.txt C:\\Users\\Yo\\Desktop…','Copia entrega.txt del servidor a tu PC de forma cifrada',['Sube el archivo al servidor','Borra el archivo del servidor','Abre el archivo de forma remota'],'scp = secure copy (sobre SSH). WinSCP es la versión gráfica.'],
+  ['Seguridad','ufw enable…','Activa el firewall',['Lo desinstala','Abre todos los puertos','Muestra las reglas'],'ufw disable lo desactiva.'],
+  ['Seguridad','ufw allow 80/tcp…','Permite el tráfico HTTP entrante',['Bloquea HTTP','Permite SSH','Abre el puerto 80 UDP'],'ufw deny 23/tcp bloquea Telnet.'],
+  ['Seguridad','ufw status numbered…','Lista las reglas activas numeradas',['Borra las reglas','Cuenta los paquetes','Reinicia ufw'],'Los números permiten borrar una regla puntual: ufw delete N.'],
+  ['Seguridad','¿Qué relación hay entre UFW e iptables?','UFW es una capa simplificada sobre iptables; sus reglas se traducen a iptables',['UFW reemplaza a iptables','No tienen relación','iptables es una interfaz de UFW'],'iptables es el motor real (netfilter).'],
+  ['Seguridad','SSH entrante al puerto 22 se evalúa en la cadena…','INPUT',['OUTPUT','FORWARD','PREROUTING'],'El destino es el propio servidor.'],
+  ['Seguridad','DROP vs REJECT:','DROP descarta en silencio y REJECT descarta y avisa al emisor',['Son iguales','REJECT acepta','DROP avisa y REJECT no'],'Con DROP, el cliente espera hasta un timeout.'],
+  ['Seguridad','fail2ban-client status sshd…','Muestra el estado de la jail de SSH y las IP baneadas',['Banea todas las IP','Reinicia SSH','Desinstala fail2ban'],'fail2ban-client status (sin argumentos) muestra el estado general.'],
+  ['Seguridad','fail2ban-client unban <IP>…','Desbloquea una IP',['Bloquea una IP','Agrega una jail','Cambia el bantime'],'Se usa si te baneaste a vos mismo.'],
+  ['Seguridad','systemctl enable fail2ban…','Hace que el servicio arranque automáticamente con el sistema',['Lo inicia solo ahora','Lo desinstala','Muestra sus logs'],'start lo inicia ahora, enable lo deja activo en cada arranque y restart lo reinicia.'],
+  ['Seguridad','En Fail2ban, los cambios se hacen en…','jail.local (una copia de jail.conf)',['jail.conf directamente','/etc/passwd','/etc/hosts'],'Así las actualizaciones no pisan tu configuración.'],
+  ['Seguridad','maxretry, findtime y bantime son…','Los intentos permitidos, la ventana de conteo y la duración del bloqueo',['El puerto, la IP y el usuario','Los minutos, las horas y los días','La CPU, la RAM y el disco'],'bantime vale 600 s por defecto.'],
+  ];
+  const tags=[...new Set(B.map(q=>q[0]))];
+  let active=new Set(tags), round=[], wrong=[], ok=0, done=0;
+  const fbox=document.getElementById('drill-filters');
+  const all=document.createElement('button'); all.type='button'; all.className='chip'; all.id='chip-all'; all.textContent='Todos ('+B.length+')'; all.setAttribute('aria-pressed','true');
+  all.onclick=()=>{active=new Set(tags); syncChips(); start(pool());}; fbox.appendChild(all);
+  tags.forEach((t,i)=>{const c=document.createElement('button');c.type='button';c.className='chip';c.id='chip-'+i;c.dataset.t=t;c.textContent=t+' ('+B.filter(q=>q[0]===t).length+')';c.setAttribute('aria-pressed','true');
+    c.onclick=()=>{ if(active.size===tags.length){active=new Set([t]);} else if(active.has(t)){active.delete(t); if(!active.size) active=new Set(tags);} else active.add(t); syncChips(); start(pool()); };
+    fbox.appendChild(c);});
+  function syncChips(){fbox.querySelectorAll('.chip[data-t]').forEach(c=>c.setAttribute('aria-pressed',active.has(c.dataset.t)&&active.size!==tags.length?'true':(active.size===tags.length?'true':'false'))); all.setAttribute('aria-pressed',active.size===tags.length?'true':'false');}
+  const shuf=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+  const pool=()=>B.filter(q=>active.has(q[0]));
+  const box=document.getElementById('drill-box'), stat=document.getElementById('drill-stat'), wbtn=document.getElementById('drill-wrong');
+  function upd(){stat.textContent=ok+' bien de '+done+' respondidas · quedan '+(round.length-done)+' · erradas: '+wrong.length; wbtn.disabled=!wrong.length;}
+  function start(list){
+    round=shuf(list); wrong=[]; ok=0; done=0; box.innerHTML='';
+    round.forEach((q,i)=>{
+      const d=document.createElement('div'); d.className='q';
+      d.innerHTML='<span class="tag">'+q[0]+' · '+(i+1)+'/'+round.length+'</span><h3></h3>'; d.querySelector('h3').textContent=q[1];
+      const opts=document.createElement('div'); opts.className='stack'; opts.style.gap='6px';
+      const fb=document.createElement('p'); fb.className='fb'; fb.hidden=true;
+      shuf([q[2],...q[3]]).forEach((t,j)=>{
+        const b=document.createElement('button'); b.type='button'; b.id='d'+i+'_'+j; b.textContent=t;
+        b.onclick=()=>{
+          opts.querySelectorAll('button').forEach(x=>{x.disabled=true; if(x.textContent===q[2]) x.classList.add('ok');});
+          const good=t===q[2]; if(good) ok++; else {b.classList.add('no'); wrong.push(q);}
+          done++; fb.hidden=false; fb.innerHTML=(good?'<b style="color:var(--ok)">Bien.</b> ':'<b style="color:var(--bad)">No.</b> '); fb.append(q[4]); upd();
+          if(done===round.length){const e=document.createElement('div'); e.className='tip'; e.innerHTML='<b>Ronda terminada: '+ok+'/'+round.length+' ('+Math.round(ok*100/round.length)+'%).</b> '+(wrong.length?'Tocá "Repetir solo las erradas" hasta que no quede ninguna.':'Perfecto, sin errores.'); box.appendChild(e);}
+        };
+        opts.appendChild(b);
+      });
+      d.appendChild(opts); d.appendChild(fb); box.appendChild(d);
+    });
+    upd();
+  }
+  document.getElementById('drill-new').onclick=()=>start(pool());
+  wbtn.onclick=()=>{ if(wrong.length){ start(wrong); window.scrollTo({top:document.getElementById('simulacro').offsetTop-60}); } };
+  start(pool());
+})();
+</script>
+
+</body>
+</html>
